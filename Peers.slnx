@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Peers.Group/Peers.Group.csproj" />
+    <Project Path="src/Peers.Session/Peers.Session.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Peers.Group.Tests/Peers.Group.Tests.csproj" />
+  </Folder>
+</Solution>
