@@ -1,4 +1,26 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+(() => {
+  const forms = document.querySelectorAll('.js-busy-form');
 
-// Write your JavaScript code.
+  forms.forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      const submitter = event.submitter;
+      if (!(submitter instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      const confirmMessage = submitter.dataset.confirm;
+      if (confirmMessage && !window.confirm(confirmMessage)) {
+        event.preventDefault();
+        return;
+      }
+
+      const busyText = submitter.dataset.busyText;
+      if (busyText) {
+        submitter.dataset.originalText = submitter.textContent ?? '';
+        submitter.textContent = busyText;
+      }
+
+      submitter.disabled = true;
+    });
+  });
+})();

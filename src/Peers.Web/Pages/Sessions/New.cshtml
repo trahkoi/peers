@@ -1,0 +1,35 @@
+@page "/sessions/new"
+@model Peers.Web.Pages.Sessions.NewModel
+@{
+    ViewData["Title"] = "Create Session";
+}
+
+<section class="hero">
+    <p class="eyebrow">Sessions</p>
+    <h1>Create Session</h1>
+    <p class="lead">Name the session and continue to attendance.</p>
+</section>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="notice notice-error" role="alert">
+        <strong>Couldn’t create the session.</strong>
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<section class="panel">
+    <form method="post" class="stack js-busy-form">
+        <label asp-for="SessionName">Session name</label>
+        <input asp-for="SessionName" placeholder="Wednesday Fundamentals" autocomplete="off" />
+        <div class="flow-actions">
+            <button type="submit" class="btn btn-primary" data-busy-text="Creating...">Create and continue</button>
+            <a asp-page="/Sessions/Index" class="btn btn-quiet">Back to sessions</a>
+        </div>
+    </form>
+</section>

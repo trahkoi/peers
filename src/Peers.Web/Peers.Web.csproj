@@ -6,4 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Peers.Training\Peers.Training.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -2,6 +2,8 @@ namespace Peers.Training.Sessions;
 
 public interface ISessionService
 {
+    IReadOnlyList<SessionSummary> ListSessions();
+
     Guid CreateSession(string name);
 
     void EndSession(Guid sessionId);

@@ -5,6 +5,21 @@ internal sealed class InMemorySessionService : ISessionService
     private readonly object _sync = new();
     private readonly Dictionary<Guid, SessionState> _sessions = [];
 
+    public IReadOnlyList<SessionSummary> ListSessions()
+    {
+        lock (_sync)
+        {
+            return _sessions.Values
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => new SessionSummary(
+                    x.Id,
+                    x.Name,
+                    x.Status == SessionStatus.Ended,
+                    x.Participants.Count))
+                .ToArray();
+        }
+    }
+
     public Guid CreateSession(string name)
     {
         var normalizedName = RequireName(name, "Session name");
@@ -124,11 +139,14 @@ internal sealed class InMemorySessionService : ISessionService
         {
             Id = id;
             Name = name;
+            CreatedAt = DateTimeOffset.UtcNow;
         }
 
         public Guid Id { get; }
 
         public string Name { get; }
+
+        public DateTimeOffset CreatedAt { get; }
 
         public SessionStatus Status { get; set; } = SessionStatus.Active;
 

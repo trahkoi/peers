@@ -1,0 +1,109 @@
+@page "/sessions/{id:guid}"
+@model Peers.Web.Pages.Sessions.ManageModel
+@{
+    var currentSession = Model.Session!;
+    ViewData["Title"] = currentSession.Name;
+}
+
+<section class="hero">
+    <p class="eyebrow">Manage Attendance</p>
+    <h1>@currentSession.Name</h1>
+    <p class="lead">Track who is in class and close attendance when everyone is in.</p>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.FlashMessage))
+{
+    <div class="notice notice-@Model.FlashTone" role="status" aria-live="polite">
+        @Model.FlashMessage
+    </div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="notice notice-error" role="alert">
+        <strong>Couldn’t save your change.</strong>
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<section class="session-shell">
+    <article class="panel">
+        <div class="panel-heading">
+            <h2>Session Status</h2>
+            <span class="status-chip @(currentSession.IsEnded ? "status-ended" : "status-active")">@(currentSession.IsEnded ? "ended" : "active")</span>
+        </div>
+        <p class="meta">ID: <code>@Model.SessionId</code></p>
+        <p class="meta">@currentSession.ParticipantCount dancers</p>
+
+        @if (!currentSession.IsEnded)
+        {
+            <form method="post" asp-page-handler="End" asp-route-id="@Model.SessionId" class="js-busy-form top-gap">
+                <button type="submit" class="btn btn-quiet" data-confirm="End this session? Dancers can no longer join or leave." data-busy-text="Ending...">
+                    End session
+                </button>
+            </form>
+        }
+    </article>
+
+    <article class="panel">
+        <h2>Add dancer</h2>
+
+        @if (currentSession.IsEnded)
+        {
+            <p class="subtle">This session is ended. Attendance is read-only.</p>
+        }
+        else
+        {
+            <form method="post" asp-page-handler="Join" asp-route-id="@Model.SessionId" class="stack js-busy-form">
+                <label asp-for="DancerName">Dancer name</label>
+                <input asp-for="DancerName" placeholder="Alex" autocomplete="off" />
+
+                <label asp-for="Role">Role</label>
+                <select asp-for="Role" asp-items="Html.GetEnumSelectList<Peers.Training.Sessions.SessionRole>()"></select>
+
+                <button type="submit" class="btn btn-primary" data-busy-text="Adding...">Add to session</button>
+            </form>
+        }
+    </article>
+
+    <article class="panel panel-wide">
+        <div class="panel-heading">
+            <h2>Participants</h2>
+            <p class="meta">@Model.Participants.Count active</p>
+        </div>
+
+        @if (Model.Participants.Count == 0)
+        {
+            <div class="empty-state">
+                <p>No dancers yet.</p>
+                <p class="subtle">Add the first participant using the Add dancer form.</p>
+            </div>
+        }
+        else
+        {
+            <ul class="participants">
+                @foreach (var dancer in Model.Participants)
+                {
+                    <li>
+                        <div>
+                            <strong>@dancer.DancerName</strong>
+                            <span class="role">@dancer.Role.ToString().ToLowerInvariant()</span>
+                        </div>
+                        @if (!currentSession.IsEnded)
+                        {
+                            <form method="post" asp-page-handler="Leave" asp-route-id="@Model.SessionId" class="js-busy-form">
+                                <input type="hidden" name="dancerName" value="@dancer.DancerName" />
+                                <button type="submit" class="btn btn-text" data-busy-text="Removing...">Remove</button>
+                            </form>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </article>
+</section>

@@ -19,6 +19,28 @@ public sealed class SessionServiceSpecificationTests
         Assert.Equal("Alex", participants[0].DancerName);
     }
 
+    [Fact]
+    public void ListSessions_ReturnsCreatedSessionsWithStatusAndCounts()
+    {
+        var service = CreateService();
+        var first = service.CreateSession("Monday");
+        service.JoinSession(first, "Alice", SessionRole.Leader);
+
+        var second = service.CreateSession("Tuesday");
+        service.EndSession(second);
+
+        var sessions = service.ListSessions();
+
+        Assert.Equal(2, sessions.Count);
+        Assert.Equal(second, sessions[0].SessionId);
+        Assert.True(sessions[0].IsEnded);
+        Assert.Equal(0, sessions[0].ParticipantCount);
+
+        Assert.Equal(first, sessions[1].SessionId);
+        Assert.False(sessions[1].IsEnded);
+        Assert.Equal(1, sessions[1].ParticipantCount);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("  ")]
