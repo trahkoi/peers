@@ -44,18 +44,29 @@ public class GroupManagerTests
     }
 
     [Fact]
-    public async Task AddMember_DuplicateMember_ThrowsConflictException()
+    public async Task AddMember_ReturnsMemberWithExpectedFields()
     {
         var sut = new global::Peers.Group.GroupManager();
         var created = await sut.CreateGroup("Alpha");
         var groupId = created.GroupId;
-        var memberId = Guid.NewGuid();
+        const string memberName = "Coach Carter";
 
-        var first = await sut.AddMember(groupId, memberId, GroupRole.Admin);
+        var result = await sut.AddMember(groupId, memberName, GroupRole.Coach);
 
-        Assert.Equal(memberId, first.MemberId);
-        await Assert.ThrowsAsync<GroupConflictException>(
-            () => sut.AddMember(groupId, memberId, GroupRole.Admin));
+        Assert.NotEqual(Guid.Empty, result.MemberId);
+        Assert.Equal(memberName, result.DisplayName);
+        Assert.Equal(GroupRole.Coach, result.Role);
+    }
+
+    [Fact]
+    public async Task AddMember_WithEmptyName_ThrowsValidationException()
+    {
+        var sut = new global::Peers.Group.GroupManager();
+        var created = await sut.CreateGroup("Alpha");
+        var groupId = created.GroupId;
+
+        await Assert.ThrowsAsync<GroupValidationException>(
+            () => sut.AddMember(groupId, " ", GroupRole.Admin));
     }
 
     [Fact]
@@ -64,10 +75,9 @@ public class GroupManagerTests
         var sut = new global::Peers.Group.GroupManager();
         var created = await sut.CreateGroup("Alpha");
         var groupId = created.GroupId;
-        var adminId = Guid.NewGuid();
-        await sut.AddMember(groupId, adminId, GroupRole.Admin);
+        var admin = await sut.AddMember(groupId, "Admin", GroupRole.Admin);
 
-        await Assert.ThrowsAsync<GroupConflictException>(() => sut.RemoveMember(groupId, adminId));
+        await Assert.ThrowsAsync<GroupConflictException>(() => sut.RemoveMember(groupId, admin.MemberId));
     }
 
     [Fact]
@@ -76,11 +86,10 @@ public class GroupManagerTests
         var sut = new global::Peers.Group.GroupManager();
         var created = await sut.CreateGroup("Alpha");
         var groupId = created.GroupId;
-        var adminId = Guid.NewGuid();
-        await sut.AddMember(groupId, adminId, GroupRole.Admin);
+        var admin = await sut.AddMember(groupId, "Admin", GroupRole.Admin);
 
         await Assert.ThrowsAsync<GroupConflictException>(
-            () => sut.ChangeMemberRole(groupId, adminId, GroupRole.Member));
+            () => sut.ChangeMemberRole(groupId, admin.MemberId, GroupRole.Member));
     }
 
     [Fact]
@@ -89,15 +98,14 @@ public class GroupManagerTests
         var sut = new global::Peers.Group.GroupManager();
         var created = await sut.CreateGroup("Alpha");
         var groupId = created.GroupId;
-        var memberId = Guid.NewGuid();
-        await sut.AddMember(groupId, memberId, GroupRole.Coach);
+        var member = await sut.AddMember(groupId, "Coach Carter", GroupRole.Coach);
 
         var result = await sut.ListMembers(groupId);
 
-        var member = Assert.Single(result);
-        Assert.Equal(memberId, member.MemberId);
-        Assert.Equal(memberId.ToString(), member.DisplayName);
-        Assert.Equal(GroupRole.Coach, member.Role);
+        var listedMember = Assert.Single(result);
+        Assert.Equal(member.MemberId, listedMember.MemberId);
+        Assert.Equal("Coach Carter", listedMember.DisplayName);
+        Assert.Equal(GroupRole.Coach, listedMember.Role);
     }
 
 }

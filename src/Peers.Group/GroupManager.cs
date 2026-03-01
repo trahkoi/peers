@@ -43,24 +43,20 @@ public sealed class GroupManager : IGroupManager
         return Task.FromResult(ToGroup(group));
     }
 
-    public Task<Member> AddMember(Guid groupId, Guid memberId, GroupRole role)
+    public Task<Member> AddMember(Guid groupId, string name, GroupRole role)
     {
         if (!_groups.TryGetValue(groupId, out var group))
         {
             throw new GroupNotFoundException("Group was not found.");
         }
 
-        if (memberId == Guid.Empty || !Enum.IsDefined(role))
+        if (string.IsNullOrWhiteSpace(name) || !Enum.IsDefined(role))
         {
             throw new GroupValidationException("Member input is invalid.");
         }
 
-        if (group.Members.ContainsKey(memberId))
-        {
-            throw new GroupConflictException("Member already exists in group.");
-        }
-
-        var membership = new MembershipRecord(groupId, memberId, role);
+        var memberId = Guid.NewGuid();
+        var membership = new MembershipRecord(groupId, memberId, name.Trim(), role);
         group.Members[memberId] = membership;
         return Task.FromResult(ToMember(membership));
     }
@@ -137,7 +133,7 @@ public sealed class GroupManager : IGroupManager
         new(group.GroupId, group.Name);
 
     private static Member ToMember(MembershipRecord membership) =>
-        new(membership.MemberId, membership.MemberId.ToString(), membership.Role);
+        new(membership.MemberId, membership.DisplayName, membership.Role);
 
     private sealed class GroupRecord(Guid groupId, string name)
     {
@@ -146,10 +142,11 @@ public sealed class GroupManager : IGroupManager
         public Dictionary<Guid, MembershipRecord> Members { get; } = new();
     }
 
-    private sealed class MembershipRecord(Guid groupId, Guid memberId, GroupRole role)
+    private sealed class MembershipRecord(Guid groupId, Guid memberId, string displayName, GroupRole role)
     {
         public Guid GroupId { get; } = groupId;
         public Guid MemberId { get; } = memberId;
+        public string DisplayName { get; } = displayName;
         public GroupRole Role { get; set; } = role;
     }
 }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Architect"
+  short_description: "Design cohesive modules with strict API boundaries"
+  default_prompt: "Use $architect to design module boundaries, define concise public APIs, and eliminate internal leakage."
