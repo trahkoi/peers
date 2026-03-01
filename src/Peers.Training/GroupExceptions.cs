@@ -1,4 +1,4 @@
-namespace Peers.Group;
+namespace Peers.Training;
 
 public class GroupValidationException(string message) : Exception(message);
 

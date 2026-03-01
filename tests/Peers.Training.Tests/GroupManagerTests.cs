@@ -1,13 +1,13 @@
-﻿using Peers.Group;
+﻿using Peers.Training;
 
-namespace Peers.Group.Tests;
+namespace Peers.Training.Tests;
 
 public class GroupManagerTests
 {
     [Fact]
     public async Task CreateGroup_ReturnsSuccess()
     {
-        var sut = new global::Peers.Group.GroupManager();
+        var sut = new global::Peers.Training.GroupManager();
 
         var result = await sut.CreateGroup("Alpha");
 
@@ -17,7 +17,7 @@ public class GroupManagerTests
     [Fact]
     public async Task CreateGroup_WithEmptyName_ThrowsValidationException()
     {
-        var sut = new global::Peers.Group.GroupManager();
+        var sut = new global::Peers.Training.GroupManager();
 
         await Assert.ThrowsAsync<GroupValidationException>(() => sut.CreateGroup(" "));
     }
@@ -25,7 +25,7 @@ public class GroupManagerTests
     [Fact]
     public async Task GetGroup_WithUnknownId_ThrowsNotFoundException()
     {
-        var sut = new global::Peers.Group.GroupManager();
+        var sut = new global::Peers.Training.GroupManager();
 
         await Assert.ThrowsAsync<GroupNotFoundException>(() => sut.GetGroup(Guid.NewGuid()));
     }
@@ -33,7 +33,7 @@ public class GroupManagerTests
     [Fact]
     public async Task UpdateGroup_UpdatesName()
     {
-        var sut = new global::Peers.Group.GroupManager();
+        var sut = new global::Peers.Training.GroupManager();
         var created = await sut.CreateGroup("Alpha");
 
         var result = await sut.UpdateGroup(
@@ -46,7 +46,7 @@ public class GroupManagerTests
     [Fact]
     public async Task AddMember_ReturnsMemberWithExpectedFields()
     {
-        var sut = new global::Peers.Group.GroupManager();
+        var sut = new global::Peers.Training.GroupManager();
         var created = await sut.CreateGroup("Alpha");
         var groupId = created.GroupId;
         const string memberName = "Coach Carter";
@@ -61,7 +61,7 @@ public class GroupManagerTests
     [Fact]
     public async Task AddMember_WithEmptyName_ThrowsValidationException()
     {
-        var sut = new global::Peers.Group.GroupManager();
+        var sut = new global::Peers.Training.GroupManager();
         var created = await sut.CreateGroup("Alpha");
         var groupId = created.GroupId;
 
@@ -72,7 +72,7 @@ public class GroupManagerTests
     [Fact]
     public async Task RemoveMember_LastAdmin_ThrowsConflictException()
     {
-        var sut = new global::Peers.Group.GroupManager();
+        var sut = new global::Peers.Training.GroupManager();
         var created = await sut.CreateGroup("Alpha");
         var groupId = created.GroupId;
         var admin = await sut.AddMember(groupId, "Admin", GroupRole.Admin);
@@ -83,7 +83,7 @@ public class GroupManagerTests
     [Fact]
     public async Task ChangeMemberRole_DemoteLastAdmin_ThrowsConflictException()
     {
-        var sut = new global::Peers.Group.GroupManager();
+        var sut = new global::Peers.Training.GroupManager();
         var created = await sut.CreateGroup("Alpha");
         var groupId = created.GroupId;
         var admin = await sut.AddMember(groupId, "Admin", GroupRole.Admin);
@@ -95,7 +95,7 @@ public class GroupManagerTests
     [Fact]
     public async Task ListMembers_ReturnsMembersWithExpectedFields()
     {
-        var sut = new global::Peers.Group.GroupManager();
+        var sut = new global::Peers.Training.GroupManager();
         var created = await sut.CreateGroup("Alpha");
         var groupId = created.GroupId;
         var member = await sut.AddMember(groupId, "Coach Carter", GroupRole.Coach);

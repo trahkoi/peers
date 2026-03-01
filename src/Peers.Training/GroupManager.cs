@@ -1,4 +1,4 @@
-namespace Peers.Group;
+namespace Peers.Training;
 
 public sealed class GroupManager : IGroupManager
 {

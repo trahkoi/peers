@@ -1,9 +1,8 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Peers.Group/Peers.Group.csproj" />
-    <Project Path="src/Peers.Session/Peers.Session.csproj" />
+    <Project Path="src/Peers.Training/Peers.Training.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Peers.Group.Tests/Peers.Group.Tests.csproj" />
+    <Project Path="tests/Peers.Training.Tests/Peers.Training.Tests.csproj" />
   </Folder>
 </Solution>
