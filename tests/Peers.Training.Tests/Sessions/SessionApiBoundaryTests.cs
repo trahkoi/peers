@@ -21,7 +21,7 @@ public sealed class SessionApiBoundaryTests
             "Peers.Training.Sessions.SessionConflictException",
             "Peers.Training.Sessions.SessionNotFoundException",
             "Peers.Training.Sessions.SessionRole",
-            "Peers.Training.Sessions.SessionServiceFactory",
+            "Peers.Training.Sessions.SessionServiceCollectionExtensions",
             "Peers.Training.Sessions.SessionValidationException"
         };
 

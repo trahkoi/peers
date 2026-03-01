@@ -1,0 +1,4 @@
+interface:
+  display_name: "UX Designer"
+  short_description: "Design minimal, natural frontend user flows"
+  default_prompt: "Use $ux-designer to design accessible, minimal frontend flows with SSR-first progressive enhancement."
