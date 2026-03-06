@@ -1,0 +1,41 @@
+@page "/sessions/join"
+@model Peers.Web.Pages.Sessions.JoinModel
+@{
+    ViewData["Title"] = "Join Session";
+}
+
+<section class="hero">
+    <p class="eyebrow">Sessions</p>
+    <h1>Join Session</h1>
+    <p class="lead">Enter the invite code shared by your coach to join a training session.</p>
+</section>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="notice notice-error" role="alert">
+        <strong>Couldn't join the session.</strong>
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<section class="panel">
+    <form method="post" asp-page-handler="Join" class="stack js-busy-form">
+        <label asp-for="InviteCode">Invite code</label>
+        <input asp-for="InviteCode" placeholder="A3F9KX" autocomplete="off" style="text-transform:uppercase" />
+
+        <label asp-for="DancerName">Your name</label>
+        <input asp-for="DancerName" placeholder="Alex" autocomplete="off" />
+
+        <label asp-for="Role">Role</label>
+        <select asp-for="Role" asp-items="Html.GetEnumSelectList<Peers.Training.Sessions.SessionRole>()"></select>
+
+        <div class="flow-actions">
+            <button type="submit" class="btn btn-primary" data-busy-text="Joining...">Join session</button>
+        </div>
+    </form>
+</section>

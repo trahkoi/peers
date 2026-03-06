@@ -2,8 +2,12 @@ namespace Peers.Training.Sessions.Internal;
 
 internal sealed class InMemorySessionService : ISessionService
 {
+    private static readonly char[] InviteCodeAlphabet =
+        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".ToCharArray(); // excludes 0,O,1,I
+
     private readonly object _sync = new();
     private readonly Dictionary<Guid, SessionState> _sessions = [];
+    private readonly Dictionary<Guid, (Guid SessionId, string DancerName)> _tokenIndex = [];
 
     public IReadOnlyList<SessionSummary> ListSessions()
     {
@@ -15,7 +19,8 @@ internal sealed class InMemorySessionService : ISessionService
                     x.Id,
                     x.Name,
                     x.Status == SessionStatus.Ended,
-                    x.Participants.Count))
+                    x.Participants.Count,
+                    x.InviteCode))
                 .ToArray();
         }
     }
@@ -94,6 +99,87 @@ internal sealed class InMemorySessionService : ISessionService
         }
     }
 
+    public string GenerateInviteCode(Guid sessionId)
+    {
+        lock (_sync)
+        {
+            var session = GetSession(sessionId);
+            EnsureSessionIsActive(session);
+
+            var existingCodes = _sessions.Values
+                .Where(s => s.InviteCode != null)
+                .Select(s => s.InviteCode!)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            string code;
+            do
+            {
+                code = GenerateCode();
+            }
+            while (existingCodes.Contains(code));
+
+            session.InviteCode = code;
+            return code;
+        }
+    }
+
+    public Guid JoinViaCode(string inviteCode, string dancerName, SessionRole role)
+    {
+        if (string.IsNullOrWhiteSpace(inviteCode))
+        {
+            throw new SessionValidationException("Invite code is required.");
+        }
+
+        var normalizedDancerName = RequireName(dancerName, "Dancer name");
+        var normalizedRole = NormalizeRole(role);
+        var normalizedCode = inviteCode.Trim().ToUpperInvariant();
+
+        lock (_sync)
+        {
+            var session = _sessions.Values.FirstOrDefault(s =>
+                string.Equals(s.InviteCode, normalizedCode, StringComparison.OrdinalIgnoreCase));
+
+            if (session is null || session.Status == SessionStatus.Ended)
+            {
+                throw new SessionValidationException("Invite code not found or session has ended.");
+            }
+
+            // Return existing token if dancer already joined
+            if (session.Participants.TryGetValue(normalizedDancerName, out var existing) && existing.Token != Guid.Empty)
+            {
+                return existing.Token;
+            }
+
+            var token = Guid.NewGuid();
+            session.Participants[normalizedDancerName] = new ParticipantState(normalizedDancerName, normalizedRole, token);
+            _tokenIndex[token] = (session.Id, normalizedDancerName);
+            return token;
+        }
+    }
+
+    public (Guid SessionId, string DancerName)? GetParticipantSession(Guid token)
+    {
+        lock (_sync)
+        {
+            if (_tokenIndex.TryGetValue(token, out var entry))
+            {
+                return entry;
+            }
+
+            return null;
+        }
+    }
+
+    private static string GenerateCode()
+    {
+        var chars = new char[6];
+        for (var i = 0; i < 6; i++)
+        {
+            chars[i] = InviteCodeAlphabet[Random.Shared.Next(InviteCodeAlphabet.Length)];
+        }
+        return new string(chars);
+    }
+
     private SessionState GetSession(Guid sessionId)
     {
         if (!_sessions.TryGetValue(sessionId, out var session))
@@ -150,10 +236,12 @@ internal sealed class InMemorySessionService : ISessionService
 
         public SessionStatus Status { get; set; } = SessionStatus.Active;
 
+        public string? InviteCode { get; set; }
+
         public Dictionary<string, ParticipantState> Participants { get; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
-    private sealed record ParticipantState(string DancerName, SessionRole Role);
+    private sealed record ParticipantState(string DancerName, SessionRole Role, Guid Token = default);
 
     private enum SessionStatus
     {

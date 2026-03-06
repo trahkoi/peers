@@ -81,6 +81,21 @@ public class ManageModel : PageModel
         }
     }
 
+    public IActionResult OnPostGenerateCode(Guid id)
+    {
+        try
+        {
+            _sessions.GenerateInviteCode(id);
+            FlashMessage = "Invite code generated.";
+            FlashTone = "success";
+            return RedirectToPage(new { id });
+        }
+        catch (Exception ex)
+        {
+            return HandleSessionException(ex, string.Empty, id);
+        }
+    }
+
     private IActionResult HandleSessionException(Exception ex, string field, Guid sessionId)
     {
         switch (ex)

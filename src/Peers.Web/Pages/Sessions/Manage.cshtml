@@ -51,6 +51,31 @@
     </article>
 
     <article class="panel">
+        <h2>Invite code</h2>
+
+        @if (currentSession.IsEnded)
+        {
+            <p class="subtle">Session has ended. Invite code is no longer active.</p>
+        }
+        else if (currentSession.InviteCode is { } code)
+        {
+            <p>Share this code with participants so they can join:</p>
+            <p class="invite-code"><code>@code</code></p>
+            <p class="subtle">Or share the link: <a href="/sessions/join?code=@code">/sessions/join?code=@code</a></p>
+            <form method="post" asp-page-handler="GenerateCode" asp-route-id="@Model.SessionId" class="top-gap js-busy-form">
+                <button type="submit" class="btn btn-quiet" data-busy-text="Regenerating...">Regenerate code</button>
+            </form>
+        }
+        else
+        {
+            <p class="subtle">No invite code yet. Generate one to let participants join.</p>
+            <form method="post" asp-page-handler="GenerateCode" asp-route-id="@Model.SessionId" class="top-gap js-busy-form">
+                <button type="submit" class="btn btn-primary" data-busy-text="Generating...">Generate invite code</button>
+            </form>
+        }
+    </article>
+
+    <article class="panel">
         <h2>Add dancer</h2>
 
         @if (currentSession.IsEnded)

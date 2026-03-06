@@ -1,0 +1,67 @@
+@page "/sessions/view"
+@model Peers.Web.Pages.Sessions.ViewModel
+@{
+    ViewData["Title"] = Model.Session?.Name ?? "Session";
+}
+
+@if (Model.TokenNotFound)
+{
+    <section class="hero">
+        <p class="eyebrow">Sessions</p>
+        <h1>Session not found</h1>
+        <p class="lead">Session not found. Your link may have expired.</p>
+    </section>
+
+    <section class="panel">
+        <p>The session you're looking for could not be found. This can happen if the server was restarted.</p>
+        <a href="/sessions/join" class="btn btn-primary">Join a session</a>
+    </section>
+}
+else
+{
+    var session = Model.Session!;
+
+    <section class="hero">
+        <p class="eyebrow">Training Session</p>
+        <h1>@session.Name</h1>
+        <p class="lead">You are joined as <strong>@Model.DancerName</strong>.</p>
+    </section>
+
+    <section class="session-shell">
+        <article class="panel">
+            <div class="panel-heading">
+                <h2>Session Status</h2>
+                <span class="status-chip @(session.IsEnded ? "status-ended" : "status-active")">@(session.IsEnded ? "ended" : "active")</span>
+            </div>
+            <p class="meta">@session.ParticipantCount dancers</p>
+        </article>
+
+        <article class="panel panel-wide">
+            <div class="panel-heading">
+                <h2>Participants</h2>
+                <p class="meta">@Model.Participants.Count active</p>
+            </div>
+
+            @if (Model.Participants.Count == 0)
+            {
+                <div class="empty-state">
+                    <p>No dancers yet.</p>
+                </div>
+            }
+            else
+            {
+                <ul class="participants">
+                    @foreach (var dancer in Model.Participants)
+                    {
+                        <li>
+                            <div>
+                                <strong>@dancer.DancerName</strong>
+                                <span class="role">@dancer.Role.ToString().ToLowerInvariant()</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </article>
+    </section>
+}

@@ -13,4 +13,10 @@ public interface ISessionService
     void LeaveSession(Guid sessionId, string dancerName);
 
     IReadOnlyList<Participant> ListParticipants(Guid sessionId);
+
+    string GenerateInviteCode(Guid sessionId);
+
+    Guid JoinViaCode(string inviteCode, string dancerName, SessionRole role);
+
+    (Guid SessionId, string DancerName)? GetParticipantSession(Guid token);
 }
