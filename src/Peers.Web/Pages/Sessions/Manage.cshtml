@@ -89,7 +89,11 @@
                 <input asp-for="DancerName" placeholder="Alex" autocomplete="off" />
 
                 <label asp-for="Role">Role</label>
-                <select asp-for="Role" asp-items="Html.GetEnumSelectList<Peers.Training.Sessions.SessionRole>()"></select>
+                <input type="hidden" asp-for="Role" value="0" />
+                <div class="role-toggle">
+                    <button type="button" class="active" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active');this.parentElement.previousElementSibling.value='0'">Leader</button>
+                    <button type="button" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active');this.parentElement.previousElementSibling.value='1'">Follower</button>
+                </div>
 
                 <button type="submit" class="btn btn-primary" data-busy-text="Adding...">Add to session</button>
             </form>
