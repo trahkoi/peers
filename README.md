@@ -10,7 +10,7 @@ dotnet run --project src/Peers.Web
 
 ### Admin credentials
 
-The session management pages require a coach login. Credentials are **not** stored in `appsettings.json` — pass them as environment variables:
+The session management pages require a coach login. They can be passed as environment variables:
 
 ```bash
 AdminCredentials__Username=coach AdminCredentials__Password=yourpassword dotnet run --project src/Peers.Web
