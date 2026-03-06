@@ -349,9 +349,24 @@ button:focus-visible {
 .role-toggle {
   display: flex;
   gap: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
 }
 
-.role-toggle button {
+.role-toggle legend {
+  font-weight: 700;
+  font-size: 0.92rem;
+  margin-bottom: 0.35rem;
+}
+
+.role-toggle input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.role-toggle label {
   flex: 1;
   min-height: 44px;
   padding: 0.6rem 0.75rem;
@@ -362,28 +377,28 @@ button:focus-visible {
   color: var(--muted);
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.role-toggle button:first-child {
+.role-toggle label[for="Role_Leader"] {
   border-radius: 11px 0 0 11px;
 }
 
-.role-toggle button:last-child {
+.role-toggle label[for="Role_Follower"] {
   border-radius: 0 11px 11px 0;
   border-left: 0;
 }
 
-.role-toggle button.active {
-  background: var(--accent);
+.role-toggle input[type="radio"]:checked + label {
+  background: #3d8b7a;
   color: #fff;
-  border-color: var(--accent);
+  border-color: #3d8b7a;
 }
 
-.role-toggle button.active + button {
-  border-left: 0;
-}
-
-.role-toggle button:focus-visible {
+.role-toggle input[type="radio"]:focus-visible + label {
   outline: 3px solid rgba(194, 77, 44, 0.25);
   outline-offset: 1px;
   z-index: 1;

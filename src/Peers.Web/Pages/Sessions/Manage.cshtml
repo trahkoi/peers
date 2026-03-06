@@ -88,12 +88,7 @@
                 <label asp-for="DancerName">Dancer name</label>
                 <input asp-for="DancerName" placeholder="Alex" autocomplete="off" />
 
-                <label asp-for="Role">Role</label>
-                <input type="hidden" asp-for="Role" value="0" />
-                <div class="role-toggle">
-                    <button type="button" class="active" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active');this.parentElement.previousElementSibling.value='0'">Leader</button>
-                    <button type="button" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active');this.parentElement.previousElementSibling.value='1'">Follower</button>
-                </div>
+                <partial name="_RoleToggle" />
 
                 <button type="submit" class="btn btn-primary" data-busy-text="Adding...">Add to session</button>
             </form>
