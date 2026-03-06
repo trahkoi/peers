@@ -10,6 +10,18 @@
     <p class="lead">Enter the invite code shared by your coach to join a training session.</p>
 </section>
 
+<div id="js-already-joined" class="notice notice-info" style="display:none" role="status"></div>
+<script>
+    try {
+        var stored = JSON.parse(localStorage.getItem('peers_participant_token') || 'null');
+        if (stored && stored.token && stored.sessionName) {
+            var el = document.getElementById('js-already-joined');
+            el.innerHTML = 'You\u2019re already in <strong>' + stored.sessionName.replace(/</g, '&lt;') + '</strong> \u2014 <a href="/sessions/view?token=' + encodeURIComponent(stored.token) + '">view it here</a>';
+            el.style.display = '';
+        }
+    } catch (e) {}
+</script>
+
 @if (!ViewData.ModelState.IsValid)
 {
     <div class="notice notice-error" role="alert">

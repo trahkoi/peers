@@ -16,6 +16,7 @@
         <p>The session you're looking for could not be found. This can happen if the server was restarted.</p>
         <a href="/sessions/join" class="btn btn-primary">Join a session</a>
     </section>
+    <script>try { localStorage.removeItem('peers_participant_token'); } catch (e) {}</script>
 }
 else
 {
@@ -64,4 +65,12 @@ else
             }
         </article>
     </section>
+    <script>
+        try {
+            var token = new URLSearchParams(location.search).get('token');
+            if (token) {
+                localStorage.setItem('peers_participant_token', JSON.stringify({ token: token, sessionName: @Json.Serialize(session.Name) }));
+            }
+        } catch (e) {}
+    </script>
 }
