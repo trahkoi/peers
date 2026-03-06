@@ -31,3 +31,48 @@ The double-underscore (`__`) is the ASP.NET Core convention for nested config ke
 ```bash
 dotnet test
 ```
+
+## Deploying to Azure
+
+The app deploys to Azure App Service via GitHub Actions on every push to `main`. Infrastructure is defined in `infra/main.bicep`.
+
+### Prerequisites
+
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) installed and logged in (`az login`)
+- An Azure subscription and resource group
+- A GitHub repository with Actions enabled
+
+### 1. Provision infrastructure
+
+```bash
+az deployment group create \
+  --resource-group <your-resource-group> \
+  --template-file infra/main.bicep \
+  --parameters appName=<your-unique-app-name>
+```
+
+The `appName` must be globally unique — it becomes `<appName>.azurewebsites.net`.
+
+### 2. Set admin credentials on the App Service
+
+```bash
+az webapp config appsettings set \
+  --resource-group <your-resource-group> \
+  --name <your-unique-app-name> \
+  --settings AdminCredentials__Username=<username> AdminCredentials__Password=<password>
+```
+
+### 3. Configure GitHub Actions secrets and variables
+
+In your GitHub repository settings:
+
+| Type | Name | Value |
+|------|------|-------|
+| Variable | `AZURE_WEBAPP_NAME` | Your App Service name (e.g. `peers-app`) |
+| Secret | `AZURE_WEBAPP_PUBLISH_PROFILE` | Contents of the publish profile downloaded from Azure Portal → App Service → **Get publish profile** |
+
+### 4. Deploy
+
+Push to `main`. GitHub Actions will build, test, and deploy automatically. The app will be available at `https://<appName>.azurewebsites.net`.
+
+> **Note:** The app is in-memory — all sessions and tokens are lost on restart or redeploy.
