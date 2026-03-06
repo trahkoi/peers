@@ -1,10 +1,23 @@
 using Peers.Training.Sessions;
+using Peers.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddSessions();
+
+builder.Services.Configure<AdminCredentials>(
+    builder.Configuration.GetSection("AdminCredentials"));
+
+builder.Services.AddAuthentication("Cookies")
+    .AddCookie("Cookies", options =>
+    {
+        options.LoginPath = "/login";
+        options.Cookie.IsEssential = true;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
+    });
 
 var app = builder.Build();
 
@@ -20,6 +33,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

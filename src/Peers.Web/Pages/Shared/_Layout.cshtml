@@ -15,6 +15,12 @@
             <nav aria-label="Main navigation">
                 <a asp-area="" asp-page="/Sessions/Index" class="top-link">Sessions</a>
             </nav>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form method="post" asp-page="/Login" asp-page-handler="Logout" style="display:contents">
+                    <button type="submit" class="btn btn-text top-link">Log out</button>
+                </form>
+            }
         </div>
     </header>
 

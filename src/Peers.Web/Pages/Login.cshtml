@@ -1,0 +1,38 @@
+@page "/login"
+@model Peers.Web.Pages.LoginModel
+@{
+    ViewData["Title"] = "Log in";
+    Layout = "_Layout";
+}
+
+<section class="hero">
+    <p class="eyebrow">Admin</p>
+    <h1>Log in</h1>
+    <p class="lead">Enter your credentials to manage training sessions.</p>
+</section>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="notice notice-error" role="alert">
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<section class="panel">
+    <form method="post" asp-page-handler="Login" asp-route-returnUrl="@Request.Query["returnUrl"]" class="stack js-busy-form">
+        <label asp-for="Username">Username</label>
+        <input asp-for="Username" autocomplete="username" />
+
+        <label asp-for="Password">Password</label>
+        <input asp-for="Password" type="password" autocomplete="current-password" />
+
+        <div class="flow-actions">
+            <button type="submit" class="btn btn-primary" data-busy-text="Logging in...">Log in</button>
+        </div>
+    </form>
+</section>

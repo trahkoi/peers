@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Peers.Training.Sessions;
 
 namespace Peers.Web.Pages.Sessions;
 
+[Authorize]
 public class IndexModel : PageModel
 {
     private readonly ISessionService _sessions;
