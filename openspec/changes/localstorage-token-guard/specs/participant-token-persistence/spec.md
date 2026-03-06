@@ -31,9 +31,24 @@ When a participant navigates to the join page and the browser has a stored token
 - **THEN** the new token overwrites the previous entry in `localStorage`
 
 ### Requirement: localStorage is cleared when stored token is invalid
-If a participant visits the session view page with a stored token that the server does not recognise (e.g. after a server restart), the browser SHALL clear `localStorage` so the participant can re-join without being stuck in a loop.
+If a participant visits the session view page with a token in the URL that the server does not recognise (e.g. after a server restart), the browser SHALL clear `localStorage` so the participant can re-join without being stuck in a loop.
 
 #### Scenario: Token not found clears localStorage
 - **WHEN** a participant loads `/sessions/view?token=<token>` and the server returns "token not found"
 - **THEN** `localStorage["peers_participant_token"]` is removed
 - **THEN** the "Session not found" error state is shown with a link to the join page
+
+### Requirement: Navigating to the view page without a token recovers from localStorage
+If a participant navigates to `/sessions/view` without a token in the URL, the browser SHALL attempt to recover their session using any token stored in `localStorage`. If no stored token exists, the participant is directed to the join page. `localStorage` is NOT cleared in either case.
+
+#### Scenario: No token in URL but localStorage has a valid stored token
+- **WHEN** a participant navigates to `/sessions/view` with no token query parameter
+- **AND** `localStorage["peers_participant_token"]` contains a stored token
+- **THEN** the browser redirects to `/sessions/view?token=<stored-token>`
+- **THEN** `localStorage` is not modified
+
+#### Scenario: No token in URL and no localStorage entry
+- **WHEN** a participant navigates to `/sessions/view` with no token query parameter
+- **AND** `localStorage["peers_participant_token"]` is absent or empty
+- **THEN** the page shows a prompt to join a session
+- **THEN** `localStorage` is not modified

@@ -49,9 +49,9 @@ The token is already issued by the server and surfaced in the URL. No server cha
 
 ### 5. Stale token handling
 
-**Decision:** Clear `localStorage` from the view page's "token not found" state.
+**Decision:** The view page distinguishes two failure states: `TokenMissing` (no token in the URL) and `TokenInvalid` (token presented to the server but not recognised). `localStorage` is cleared only on `TokenInvalid`.
 
-**Rationale:** If the server restarts, the token in `localStorage` is invalid. Without clearing it, the participant would loop: join page notice → click view → token not found → join page notice → ... Clearing on the not-found path breaks the loop and lets them re-join cleanly.
+**Rationale:** If the server restarts, the stored token is invalid — clearing it breaks the loop (join page notice → view → not found → join page notice → ...) and lets the participant re-join cleanly. On `TokenMissing`, however, the stored token may still be valid; clearing it would destroy a working recovery path. Instead, the `TokenMissing` state triggers a JS redirect to `/sessions/view?token=<stored>` if localStorage has an entry, letting the participant land in their session transparently.
 
 ## Risks / Trade-offs
 

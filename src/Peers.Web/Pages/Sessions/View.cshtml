@@ -4,7 +4,26 @@
     ViewData["Title"] = Model.Session?.Name ?? "Session";
 }
 
-@if (Model.TokenNotFound)
+@if (Model.TokenMissing)
+{
+    <script>
+        try {
+            var stored = JSON.parse(localStorage.getItem('peers_participant_token') || 'null');
+            if (stored && stored.token) {
+                location.replace('/sessions/view?token=' + encodeURIComponent(stored.token));
+            }
+        } catch (e) {}
+    </script>
+    <section class="hero">
+        <p class="eyebrow">Sessions</p>
+        <h1>No session link</h1>
+        <p class="lead">Open the link you received when you joined, or join a session below.</p>
+    </section>
+    <section class="panel">
+        <a href="/sessions/join" class="btn btn-primary">Join a session</a>
+    </section>
+}
+else if (Model.TokenInvalid)
 {
     <section class="hero">
         <p class="eyebrow">Sessions</p>

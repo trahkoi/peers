@@ -19,27 +19,29 @@ public class ViewModel : PageModel
 
     public string DancerName { get; private set; } = string.Empty;
 
-    public bool TokenNotFound { get; private set; }
+    public bool TokenMissing { get; private set; }
+
+    public bool TokenInvalid { get; private set; }
 
     public IActionResult OnGet(Guid token)
     {
         if (token == Guid.Empty)
         {
-            TokenNotFound = true;
+            TokenMissing = true;
             return Page();
         }
 
         var entry = _sessions.GetParticipantSession(token);
         if (entry is null)
         {
-            TokenNotFound = true;
+            TokenInvalid = true;
             return Page();
         }
 
         var session = _sessions.ListSessions().FirstOrDefault(s => s.SessionId == entry.Value.SessionId);
         if (session is null)
         {
-            TokenNotFound = true;
+            TokenInvalid = true;
             return Page();
         }
 
