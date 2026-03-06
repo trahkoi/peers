@@ -17,8 +17,7 @@ public sealed class SessionApiBoundaryTests
 
         var expectedExportedTypeNames = new[]
         {
-            "Peers.Training.Persistence.TrainingDbContext",
-            "Peers.Training.Persistence.TrainingDbContextFactory",
+            "Peers.Training.Dancers.Dancer",
             "Peers.Training.Sessions.ISessionService",
             "Peers.Training.Sessions.Participant",
             "Peers.Training.Sessions.SessionConflictException",

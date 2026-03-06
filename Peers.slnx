@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Peers.Persistence/Peers.Persistence.csproj" />
     <Project Path="src/Peers.Training/Peers.Training.csproj" />
   </Folder>
   <Folder Name="/tests/">

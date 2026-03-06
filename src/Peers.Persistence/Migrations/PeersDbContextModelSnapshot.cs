@@ -3,25 +3,43 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Peers.Training.Persistence;
+using Peers.Persistence;
 
 #nullable disable
 
-namespace Peers.Training.Persistence.Migrations
+namespace Peers.Persistence.Migrations
 {
-    [DbContext(typeof(TrainingDbContext))]
-    partial class TrainingDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(PeersDbContext))]
+    partial class PeersDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
 
+            modelBuilder.Entity("Peers.Training.Dancers.DancerEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DancerEntity");
+                });
+
             modelBuilder.Entity("Peers.Training.Sessions.Internal.ParticipantEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("DancerId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("DancerName")
                         .IsRequired()
@@ -38,6 +56,8 @@ namespace Peers.Training.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DancerId");
+
                     b.HasIndex("Token")
                         .IsUnique()
                         .HasFilter("Token IS NOT NULL");
@@ -45,7 +65,7 @@ namespace Peers.Training.Persistence.Migrations
                     b.HasIndex("SessionId", "DancerName")
                         .IsUnique();
 
-                    b.ToTable("Participants");
+                    b.ToTable("ParticipantEntity");
                 });
 
             modelBuilder.Entity("Peers.Training.Sessions.Internal.SessionEntity", b =>
@@ -73,11 +93,17 @@ namespace Peers.Training.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("InviteCode IS NOT NULL");
 
-                    b.ToTable("Sessions");
+                    b.ToTable("SessionEntity");
                 });
 
             modelBuilder.Entity("Peers.Training.Sessions.Internal.ParticipantEntity", b =>
                 {
+                    b.HasOne("Peers.Training.Dancers.DancerEntity", null)
+                        .WithMany()
+                        .HasForeignKey("DancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Peers.Training.Sessions.Internal.SessionEntity", "Session")
                         .WithMany("Participants")
                         .HasForeignKey("SessionId")

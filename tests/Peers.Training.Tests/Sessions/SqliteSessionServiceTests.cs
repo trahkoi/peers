@@ -1,7 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Peers.Training.Persistence;
+using Peers.Persistence;
 using Peers.Training.Sessions;
 using Peers.Training.Sessions.Internal;
 
@@ -17,12 +17,12 @@ public sealed class SqliteSessionServiceTests : SessionServiceSpecificationTests
         _connection.Open();
 
         var services = new ServiceCollection();
-        services.AddDbContext<TrainingDbContext>(options => options.UseSqlite(_connection));
-        services.AddScoped<ISessionService, SqliteSessionService>();
+        services.AddDbContext<PeersDbContext>(options => options.UseSqlite(_connection));
+        services.AddTraining();
 
         var provider = services.BuildServiceProvider();
 
-        var db = provider.GetRequiredService<TrainingDbContext>();
+        var db = provider.GetRequiredService<PeersDbContext>();
         db.Database.EnsureCreated();
 
         return provider.GetRequiredService<ISessionService>();

@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Peers.Persistence;
 using Peers.Training.Persistence;
 using Peers.Training.Sessions.Internal;
 
@@ -16,21 +16,13 @@ public static class SessionServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddSqliteSessions(this IServiceCollection services, string connectionString)
+    public static IServiceCollection AddTraining(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
-        services.AddDbContext<TrainingDbContext>(options => options.UseSqlite(connectionString));
+        services.AddSingleton<IModuleEntityConfiguration, TrainingEntityConfiguration>();
         services.AddScoped<ISessionService, SqliteSessionService>();
 
         return services;
-    }
-
-    public static void MigrateSessionsDatabase(this IServiceProvider services)
-    {
-        using var scope = services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<TrainingDbContext>();
-        db.Database.Migrate();
     }
 }

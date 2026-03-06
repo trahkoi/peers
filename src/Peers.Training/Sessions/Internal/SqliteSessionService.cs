@@ -1,4 +1,5 @@
-using Peers.Training.Persistence;
+using Peers.Persistence;
+using Peers.Training.Dancers;
 
 namespace Peers.Training.Sessions.Internal;
 
@@ -7,16 +8,19 @@ internal sealed class SqliteSessionService : ISessionService
     private static readonly char[] InviteCodeAlphabet =
         "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".ToCharArray();
 
-    private readonly TrainingDbContext _db;
+    private readonly PeersDbContext _db;
+    private Microsoft.EntityFrameworkCore.DbSet<SessionEntity> Sessions => _db.Set<SessionEntity>();
+    private Microsoft.EntityFrameworkCore.DbSet<ParticipantEntity> Participants => _db.Set<ParticipantEntity>();
+    private Microsoft.EntityFrameworkCore.DbSet<DancerEntity> Dancers => _db.Set<DancerEntity>();
 
-    public SqliteSessionService(TrainingDbContext db)
+    public SqliteSessionService(PeersDbContext db)
     {
         _db = db;
     }
 
     public IReadOnlyList<SessionSummary> ListSessions()
     {
-        return _db.Sessions
+        return Sessions
             .OrderByDescending(s => s.CreatedAt)
             .Select(s => new SessionSummary(
                 s.Id,
@@ -38,7 +42,7 @@ internal sealed class SqliteSessionService : ISessionService
             IsEnded = false
         };
 
-        _db.Sessions.Add(session);
+        Sessions.Add(session);
         _db.SaveChanges();
         return session.Id;
     }
@@ -64,7 +68,7 @@ internal sealed class SqliteSessionService : ISessionService
         var session = GetSession(sessionId);
         EnsureSessionIsActive(session);
 
-        var exists = _db.Participants.Any(p =>
+        var exists = Participants.Any(p =>
             p.SessionId == sessionId &&
             p.DancerName.ToUpper() == normalizedDancerName.ToUpper());
 
@@ -74,9 +78,12 @@ internal sealed class SqliteSessionService : ISessionService
                 $"Dancer '{normalizedDancerName}' is already participating in session '{sessionId}'.");
         }
 
-        _db.Participants.Add(new ParticipantEntity
+        var dancer = ResolveOrCreateDancer(normalizedDancerName);
+
+        Participants.Add(new ParticipantEntity
         {
             SessionId = sessionId,
+            DancerId = dancer.Id,
             DancerName = normalizedDancerName,
             Role = normalizedRole
         });
@@ -91,7 +98,7 @@ internal sealed class SqliteSessionService : ISessionService
         var session = GetSession(sessionId);
         EnsureSessionIsActive(session);
 
-        var participant = _db.Participants.FirstOrDefault(p =>
+        var participant = Participants.FirstOrDefault(p =>
             p.SessionId == sessionId &&
             p.DancerName.ToUpper() == normalizedDancerName.ToUpper());
 
@@ -100,7 +107,7 @@ internal sealed class SqliteSessionService : ISessionService
             throw new SessionNotFoundException(sessionId);
         }
 
-        _db.Participants.Remove(participant);
+        Participants.Remove(participant);
         _db.SaveChanges();
     }
 
@@ -108,7 +115,7 @@ internal sealed class SqliteSessionService : ISessionService
     {
         var session = GetSession(sessionId);
 
-        return _db.Participants
+        return Participants
             .Where(p => p.SessionId == sessionId)
             .OrderBy(p => p.DancerName)
             .Select(p => new Participant(p.DancerName, p.Role))
@@ -120,7 +127,7 @@ internal sealed class SqliteSessionService : ISessionService
         var session = GetSession(sessionId);
         EnsureSessionIsActive(session);
 
-        var existingCodes = _db.Sessions
+        var existingCodes = Sessions
             .Where(s => s.InviteCode != null)
             .Select(s => s.InviteCode!)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -148,7 +155,7 @@ internal sealed class SqliteSessionService : ISessionService
         var normalizedRole = NormalizeRole(role);
         var normalizedCode = inviteCode.Trim().ToUpperInvariant();
 
-        var session = _db.Sessions.FirstOrDefault(s =>
+        var session = Sessions.FirstOrDefault(s =>
             s.InviteCode != null &&
             s.InviteCode.ToUpper() == normalizedCode);
 
@@ -157,7 +164,7 @@ internal sealed class SqliteSessionService : ISessionService
             throw new SessionValidationException("Invite code not found or session has ended.");
         }
 
-        var existing = _db.Participants.FirstOrDefault(p =>
+        var existing = Participants.FirstOrDefault(p =>
             p.SessionId == session.Id &&
             p.DancerName.ToUpper() == normalizedDancerName.ToUpper());
 
@@ -174,9 +181,12 @@ internal sealed class SqliteSessionService : ISessionService
         }
         else
         {
-            _db.Participants.Add(new ParticipantEntity
+            var dancer = ResolveOrCreateDancer(normalizedDancerName);
+
+            Participants.Add(new ParticipantEntity
             {
                 SessionId = session.Id,
+                DancerId = dancer.Id,
                 DancerName = normalizedDancerName,
                 Role = normalizedRole,
                 Token = token
@@ -189,7 +199,7 @@ internal sealed class SqliteSessionService : ISessionService
 
     public (Guid SessionId, string DancerName)? GetParticipantSession(Guid token)
     {
-        var participant = _db.Participants.FirstOrDefault(p => p.Token == token);
+        var participant = Participants.FirstOrDefault(p => p.Token == token);
 
         if (participant is null)
         {
@@ -199,9 +209,21 @@ internal sealed class SqliteSessionService : ISessionService
         return (participant.SessionId, participant.DancerName);
     }
 
+    private DancerEntity ResolveOrCreateDancer(string name)
+    {
+        var dancer = Dancers.FirstOrDefault(d => d.Name.ToUpper() == name.ToUpper());
+
+        if (dancer is not null)
+            return dancer;
+
+        dancer = new DancerEntity { Id = Guid.NewGuid(), Name = name };
+        Dancers.Add(dancer);
+        return dancer;
+    }
+
     private SessionEntity GetSession(Guid sessionId)
     {
-        var session = _db.Sessions.FirstOrDefault(s => s.Id == sessionId);
+        var session = Sessions.FirstOrDefault(s => s.Id == sessionId);
 
         if (session is null)
         {

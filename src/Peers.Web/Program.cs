@@ -1,3 +1,4 @@
+using Peers.Persistence;
 using Peers.Training.Sessions;
 using Peers.Web;
 
@@ -7,9 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 if (builder.Configuration.GetConnectionString("Sessions") is { } connectionString)
-    builder.Services.AddSqliteSessions(connectionString);
+{
+    builder.Services.AddPeersDb(connectionString);
+    builder.Services.AddTraining();
+}
 else
+{
     builder.Services.AddSessions();
+}
 
 builder.Services.Configure<AdminCredentials>(
     builder.Configuration.GetSection("AdminCredentials"));
@@ -27,7 +33,7 @@ var app = builder.Build();
 
 if (app.Configuration.GetConnectionString("Sessions") is not null)
 {
-    app.Services.MigrateSessionsDatabase();
+    app.Services.MigratePeersDatabase();
 }
 
 // Configure the HTTP request pipeline.

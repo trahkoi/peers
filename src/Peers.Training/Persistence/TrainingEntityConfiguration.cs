@@ -1,19 +1,20 @@
 using Microsoft.EntityFrameworkCore;
-using Peers.Training.Sessions;
+using Peers.Persistence;
+using Peers.Training.Dancers;
 using Peers.Training.Sessions.Internal;
 
 namespace Peers.Training.Persistence;
 
-public sealed class TrainingDbContext : DbContext
+internal sealed class TrainingEntityConfiguration : IModuleEntityConfiguration
 {
-    public TrainingDbContext(DbContextOptions<TrainingDbContext> options) : base(options) { }
-
-    internal DbSet<SessionEntity> Sessions => Set<SessionEntity>();
-
-    internal DbSet<ParticipantEntity> Participants => Set<ParticipantEntity>();
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public void Apply(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<DancerEntity>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired();
+        });
+
         modelBuilder.Entity<SessionEntity>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -28,6 +29,7 @@ public sealed class TrainingDbContext : DbContext
             entity.Property(e => e.DancerName).IsRequired();
             entity.HasIndex(e => new { e.SessionId, e.DancerName }).IsUnique();
             entity.HasIndex(e => e.Token).IsUnique().HasFilter("Token IS NOT NULL");
+            entity.HasOne<DancerEntity>().WithMany().HasForeignKey(e => e.DancerId);
         });
     }
 }

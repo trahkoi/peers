@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Peers.Persistence\Peers.Persistence.csproj" />
     <ProjectReference Include="..\..\src\Peers.Training\Peers.Training.csproj" />
   </ItemGroup>
 
