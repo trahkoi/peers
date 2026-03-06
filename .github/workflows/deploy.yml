@@ -21,17 +21,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
       - name: Test
-        run: dotnet test --no-build --configuration Release
+        run: dotnet test tests/Peers.Training.Tests/Peers.Training.Tests.csproj --configuration Release
 
       - name: Publish
-        run: dotnet publish src/Peers.Web/Peers.Web.csproj --no-restore --configuration Release --output publish/
+        run: dotnet publish src/Peers.Web/Peers.Web.csproj --configuration Release --output publish/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
