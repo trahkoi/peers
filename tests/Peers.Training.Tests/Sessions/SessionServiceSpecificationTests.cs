@@ -154,6 +154,53 @@ public sealed class SessionServiceSpecificationTests
         Assert.Throws<SessionNotFoundException>(() => service.ListParticipants(missingSessionId));
     }
 
+    [Fact]
+    public void LeaveSession_InvalidatesParticipantToken()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        var token = service.JoinViaCode(code, "Jules", SessionRole.Leader);
+
+        service.LeaveSession(sessionId, "Jules");
+
+        Assert.Null(service.GetParticipantSession(token));
+    }
+
+    [Fact]
+    public void LeaveSession_RemovedParticipantCanRejoinWithNewToken()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        var originalToken = service.JoinViaCode(code, "Jules", SessionRole.Leader);
+
+        service.LeaveSession(sessionId, "Jules");
+        var newToken = service.JoinViaCode(code, "Jules", SessionRole.Leader);
+
+        Assert.NotEqual(originalToken, newToken);
+        var entry = service.GetParticipantSession(newToken);
+        Assert.NotNull(entry);
+        Assert.Equal(sessionId, entry.Value.SessionId);
+        Assert.Equal("Jules", entry.Value.DancerName);
+    }
+
+    [Fact]
+    public void LeaveSession_ParticipantWithoutToken_DoesNotAffectTokenIndex()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        var otherToken = service.JoinViaCode(code, "Mika", SessionRole.Follower);
+
+        service.JoinSession(sessionId, "Jules", SessionRole.Leader);
+        service.LeaveSession(sessionId, "Jules");
+
+        var entry = service.GetParticipantSession(otherToken);
+        Assert.NotNull(entry);
+        Assert.Equal("Mika", entry.Value.DancerName);
+    }
+
     private static ISessionService CreateService()
     {
         var services = new ServiceCollection();

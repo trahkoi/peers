@@ -80,10 +80,17 @@ internal sealed class InMemorySessionService : ISessionService
             var session = GetSession(sessionId);
             EnsureSessionIsActive(session);
 
-            if (!session.Participants.Remove(normalizedDancerName))
+            if (!session.Participants.TryGetValue(normalizedDancerName, out var participant))
             {
                 throw new SessionNotFoundException(sessionId);
             }
+
+            if (participant.Token != Guid.Empty)
+            {
+                _tokenIndex.Remove(participant.Token);
+            }
+
+            session.Participants.Remove(normalizedDancerName);
         }
     }
 
