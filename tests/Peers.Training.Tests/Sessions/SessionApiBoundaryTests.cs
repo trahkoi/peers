@@ -10,12 +10,15 @@ public sealed class SessionApiBoundaryTests
         var assembly = typeof(ISessionService).Assembly;
         var exportedTypeNames = assembly
             .GetExportedTypes()
+            .Where(static x => !x.FullName!.Contains(".Migrations."))
             .Select(static x => x.FullName)
             .OrderBy(static x => x, StringComparer.Ordinal)
             .ToArray();
 
         var expectedExportedTypeNames = new[]
         {
+            "Peers.Training.Persistence.TrainingDbContext",
+            "Peers.Training.Persistence.TrainingDbContextFactory",
             "Peers.Training.Sessions.ISessionService",
             "Peers.Training.Sessions.Participant",
             "Peers.Training.Sessions.SessionConflictException",

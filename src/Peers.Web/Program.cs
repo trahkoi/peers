@@ -5,7 +5,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddSessions();
+
+if (builder.Configuration.GetConnectionString("Sessions") is { } connectionString)
+    builder.Services.AddSqliteSessions(connectionString);
+else
+    builder.Services.AddSessions();
 
 builder.Services.Configure<AdminCredentials>(
     builder.Configuration.GetSection("AdminCredentials"));
@@ -20,6 +24,11 @@ builder.Services.AddAuthentication("Cookies")
     });
 
 var app = builder.Build();
+
+if (app.Configuration.GetConnectionString("Sessions") is not null)
+{
+    app.Services.MigrateSessionsDatabase();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

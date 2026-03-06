@@ -1,10 +1,13 @@
-using Microsoft.Extensions.DependencyInjection;
 using Peers.Training.Sessions;
 
 namespace Peers.Training.Tests.Sessions;
 
-public sealed class SessionServiceSpecificationTests
+public abstract class SessionServiceSpecificationTests : IDisposable
 {
+    protected abstract ISessionService CreateService();
+
+    public virtual void Dispose() { }
+
     [Fact]
     public void CreateSession_WithValidName_ReturnsStableSessionId()
     {
@@ -199,13 +202,5 @@ public sealed class SessionServiceSpecificationTests
         var entry = service.GetParticipantSession(otherToken);
         Assert.NotNull(entry);
         Assert.Equal("Mika", entry.Value.DancerName);
-    }
-
-    private static ISessionService CreateService()
-    {
-        var services = new ServiceCollection();
-        services.AddSessions();
-        var provider = services.BuildServiceProvider();
-        return provider.GetRequiredService<ISessionService>();
     }
 }

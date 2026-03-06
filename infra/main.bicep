@@ -42,6 +42,10 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
           name: 'AdminCredentials__Password'
           value: ''
         }
+        {
+          name: 'ConnectionStrings__Sessions'
+          value: 'Data Source=/home/data/peers.db'
+        }
       ]
     }
     httpsOnly: true
