@@ -127,7 +127,12 @@
                 var dancerNames = Model.Participants.ToDictionary(p => p.DancerId, p => p.DancerName);
                 @foreach (var round in Model.SpotlightRounds)
                 {
-                    <h3 class="top-gap">Round @round.RoundNumber</h3>
+                    <div class="panel-heading top-gap">
+                        <h3>Round @round.RoundNumber</h3>
+                        <form method="post" asp-page-handler="DeleteSpotlight" asp-route-id="@Model.SessionId" asp-route-roundId="@round.Id" asp-route-token="@Model.ParticipantToken" class="js-busy-form">
+                            <button type="submit" class="btn btn-text" data-confirm="Delete this spotlight round?" data-busy-text="Deleting...">Delete</button>
+                        </form>
+                    </div>
                     @if (round.Pairings.Count > 0)
                     {
                         <table>

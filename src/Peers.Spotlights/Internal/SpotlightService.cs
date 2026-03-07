@@ -59,6 +59,15 @@ internal sealed class SpotlightService : ISpotlightService
             .ToList();
     }
 
+    public void DeleteRound(Guid roundId)
+    {
+        var round = Rounds.FirstOrDefault(r => r.Id == roundId);
+        if (round is null) return;
+
+        Rounds.Remove(round);
+        _db.SaveChanges();
+    }
+
     private Dictionary<(Guid LeaderId, Guid FollowerId), int> GetHistoricalCounts(
         IReadOnlyList<Guid> dancerIds)
     {

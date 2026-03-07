@@ -7,4 +7,6 @@ public interface ISpotlightService
         IReadOnlyList<Guid> followerDancerIds);
 
     IReadOnlyList<SpotlightRound> GetRounds(Guid sessionId);
+
+    void DeleteRound(Guid roundId);
 }
