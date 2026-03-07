@@ -43,7 +43,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
           value: ''
         }
         {
-          name: 'ConnectionStrings__Sessions'
+          name: 'ConnectionStrings__Peers'
           value: 'Data Source=/home/data/peers.db'
         }
       ]

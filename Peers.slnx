@@ -5,6 +5,7 @@
     <Project Path="src/Peers.Spotlights/Peers.Spotlights.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Peers.Persistence.Tests/Peers.Persistence.Tests.csproj" />
     <Project Path="tests/Peers.Training.Tests/Peers.Training.Tests.csproj" />
     <Project Path="tests/Peers.Spotlights.Tests/Peers.Spotlights.Tests.csproj" />
     <Project Path="tests/Peers.Architecture.Tests/Peers.Architecture.Tests.csproj" />

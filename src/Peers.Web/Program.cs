@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 
-if (builder.Configuration.GetConnectionString("Sessions") is { } connectionString)
+if (builder.Configuration.GetConnectionString("Peers") is { } connectionString)
 {
     builder.Services.AddPeersDb(connectionString);
     builder.Services.AddTraining();
@@ -33,9 +33,9 @@ builder.Services.AddAuthentication("Cookies")
 
 var app = builder.Build();
 
-if (app.Configuration.GetConnectionString("Sessions") is not null)
+if (app.Configuration.GetConnectionString("Peers") is { } migrationConnectionString)
 {
-    app.Services.MigratePeersDatabase();
+    app.Services.MigratePeersDatabase(migrationConnectionString);
 }
 
 // Configure the HTTP request pipeline.
