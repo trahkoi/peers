@@ -12,6 +12,14 @@ param appServicePlanSku string = 'B1'
 @secure()
 param peersDbConnectionString string
 
+@description('Admin username for the application.')
+@secure()
+param adminUsername string
+
+@description('Admin password for the application.')
+@secure()
+param adminPassword string
+
 var planName = '${appName}-plan'
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
@@ -40,11 +48,11 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
         }
         {
           name: 'AdminCredentials__Username'
-          value: ''
+          value: adminUsername
         }
         {
           name: 'AdminCredentials__Password'
-          value: ''
+          value: adminPassword
         }
         {
           name: 'ConnectionStrings__Peers'
