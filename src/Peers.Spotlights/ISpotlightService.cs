@@ -6,5 +6,5 @@ public interface ISpotlightService
         IReadOnlyList<Guid> leaderDancerIds,
         IReadOnlyList<Guid> followerDancerIds);
 
-    SpotlightRound? GetRound(Guid sessionId);
+    IReadOnlyList<SpotlightRound> GetRounds(Guid sessionId);
 }

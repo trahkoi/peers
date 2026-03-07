@@ -17,25 +17,22 @@ internal static class PairingAlgorithm
 
         while (unpairedLeaders.Count > 0 && unpairedFollowers.Count > 0)
         {
-            var subRound = GreedyPass(unpairedLeaders, unpairedFollowers, runningCounts);
+            var subRound = MinCostMatching(unpairedLeaders, unpairedFollowers, runningCounts);
 
             if (subRound.Count == 0)
-                break; // No valid pairings possible (e.g., all candidates are self-pairs)
+                break;
 
             result.AddRange(subRound);
 
-            // Track which dancers from the larger group are still unpaired
             var pairedLeaders = new HashSet<Guid>(subRound.Select(p => p.LeaderId));
             var pairedFollowers = new HashSet<Guid>(subRound.Select(p => p.FollowerId));
 
-            // Accumulate sub-round pairings as history for subsequent passes
             foreach (var (leaderId, followerId) in subRound)
             {
                 var key = (leaderId, followerId);
                 runningCounts[key] = runningCounts.GetValueOrDefault(key) + 1;
             }
 
-            // Remove paired dancers from the larger group; reset the smaller group
             if (leaders.Count >= followers.Count)
             {
                 unpairedLeaders = unpairedLeaders.Where(id => !pairedLeaders.Contains(id)).ToList();
@@ -51,50 +48,150 @@ internal static class PairingAlgorithm
         return result;
     }
 
-    private static List<(Guid LeaderId, Guid FollowerId)> GreedyPass(
+    private static List<(Guid LeaderId, Guid FollowerId)> MinCostMatching(
         IReadOnlyList<Guid> leaders,
         IReadOnlyList<Guid> followers,
         Dictionary<(Guid, Guid), int> costs)
     {
-        var candidates = new List<(Guid LeaderId, Guid FollowerId, int Cost)>();
-        foreach (var leader in leaders)
-        {
-            foreach (var follower in followers)
-            {
-                if (leader == follower)
-                    continue;
+        var n = leaders.Count;
+        var m = followers.Count;
+        var size = Math.Min(n, m);
 
-                var cost = costs.GetValueOrDefault((leader, follower));
-                candidates.Add((leader, follower, cost));
+        // Build cost matrix (rows = leaders, cols = followers)
+        // Self-pairs get a very high cost to effectively exclude them
+        const int selfPairCost = 1_000_000;
+        var costMatrix = new int[n, m];
+        for (var i = 0; i < n; i++)
+        {
+            for (var j = 0; j < m; j++)
+            {
+                if (leaders[i] == followers[j])
+                    costMatrix[i, j] = selfPairCost;
+                else
+                    costMatrix[i, j] = costs.GetValueOrDefault((leaders[i], followers[j]));
             }
         }
 
-        candidates.Sort((a, b) =>
+        // Use Hungarian algorithm on the smaller dimension
+        var assignments = Hungarian(costMatrix, n, m);
+
+        var result = new List<(Guid LeaderId, Guid FollowerId)>();
+        foreach (var (row, col) in assignments)
         {
-            var costCmp = a.Cost.CompareTo(b.Cost);
-            if (costCmp != 0) return costCmp;
+            if (costMatrix[row, col] >= selfPairCost)
+                continue;
+            result.Add((leaders[row], followers[col]));
+        }
 
-            var leaderCmp = a.LeaderId.CompareTo(b.LeaderId);
-            if (leaderCmp != 0) return leaderCmp;
-
-            return a.FollowerId.CompareTo(b.FollowerId);
+        // Sort deterministically by leader GUID then follower GUID
+        result.Sort((a, b) =>
+        {
+            var cmp = a.LeaderId.CompareTo(b.LeaderId);
+            return cmp != 0 ? cmp : a.FollowerId.CompareTo(b.FollowerId);
         });
 
-        var usedLeaders = new HashSet<Guid>();
-        var usedFollowers = new HashSet<Guid>();
-        var result = new List<(Guid LeaderId, Guid FollowerId)>();
+        return result;
+    }
 
-        foreach (var (leaderId, followerId, _) in candidates)
+    /// <summary>
+    /// Hungarian algorithm for min-cost assignment on a rectangular cost matrix.
+    /// Returns (row, col) pairs for the optimal matching of size min(rows, cols).
+    /// </summary>
+    private static List<(int Row, int Col)> Hungarian(int[,] cost, int rows, int cols)
+    {
+        // Transpose if more rows than columns so we always have rows <= cols
+        var transposed = rows > cols;
+        if (transposed)
         {
-            if (usedLeaders.Contains(leaderId) || usedFollowers.Contains(followerId))
-                continue;
+            var t = new int[cols, rows];
+            for (var i = 0; i < rows; i++)
+                for (var j = 0; j < cols; j++)
+                    t[j, i] = cost[i, j];
+            cost = t;
+            (rows, cols) = (cols, rows);
+        }
 
-            result.Add((leaderId, followerId));
-            usedLeaders.Add(leaderId);
-            usedFollowers.Add(followerId);
+        // Standard Hungarian on rows x cols where rows <= cols
+        // u[i] = potential for row i (1-indexed, 0 is dummy)
+        // v[j] = potential for col j
+        var u = new int[rows + 1];
+        var v = new int[cols + 1];
+        var assignment = new int[cols + 1]; // assignment[j] = row assigned to col j
 
-            if (result.Count >= Math.Min(leaders.Count, followers.Count))
-                break;
+        for (var i = 1; i <= rows; i++)
+        {
+            // Find augmenting path from row i
+            var links = new int[cols + 1]; // links[j] = previous col in alternating path
+            var mins = new int[cols + 1];  // mins[j] = current minimum reduced cost to col j
+            var visited = new bool[cols + 1];
+
+            for (var j = 0; j <= cols; j++)
+            {
+                mins[j] = int.MaxValue;
+                links[j] = 0;
+            }
+
+            assignment[0] = i;
+            var currentCol = 0;
+
+            do
+            {
+                visited[currentCol] = true;
+                var currentRow = assignment[currentCol];
+                var delta = int.MaxValue;
+                var nextCol = 0;
+
+                for (var j = 1; j <= cols; j++)
+                {
+                    if (visited[j]) continue;
+
+                    var reducedCost = cost[currentRow - 1, j - 1] - u[currentRow] - v[j];
+                    if (reducedCost < mins[j])
+                    {
+                        mins[j] = reducedCost;
+                        links[j] = currentCol;
+                    }
+
+                    if (mins[j] < delta)
+                    {
+                        delta = mins[j];
+                        nextCol = j;
+                    }
+                }
+
+                // Update potentials
+                for (var j = 0; j <= cols; j++)
+                {
+                    if (visited[j])
+                    {
+                        u[assignment[j]] += delta;
+                        v[j] -= delta;
+                    }
+                    else
+                    {
+                        mins[j] -= delta;
+                    }
+                }
+
+                currentCol = nextCol;
+            } while (assignment[currentCol] != 0);
+
+            // Trace back augmenting path
+            while (currentCol != 0)
+            {
+                var prevCol = links[currentCol];
+                assignment[currentCol] = assignment[prevCol];
+                currentCol = prevCol;
+            }
+        }
+
+        var result = new List<(int, int)>();
+        for (var j = 1; j <= cols; j++)
+        {
+            if (assignment[j] == 0) continue;
+            var row = assignment[j] - 1;
+            var col = j - 1;
+            result.Add(transposed ? (col, row) : (row, col));
         }
 
         return result;

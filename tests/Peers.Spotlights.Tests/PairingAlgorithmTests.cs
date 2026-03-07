@@ -175,6 +175,30 @@ public sealed class PairingAlgorithmTests
     }
 
     [Fact]
+    public void ThreeByThree_ThreeRounds_NoRepeats()
+    {
+        var leaders = new[] { Id(1), Id(2), Id(3) };
+        var followers = new[] { Id(4), Id(5), Id(6) };
+        var history = new Dictionary<(Guid, Guid), int>();
+
+        var allPairings = new List<(Guid, Guid)>();
+
+        for (var round = 0; round < 3; round++)
+        {
+            var pairings = PairingAlgorithm.GeneratePairings(leaders, followers, history);
+            foreach (var (leaderId, followerId) in pairings)
+            {
+                allPairings.Add((leaderId, followerId));
+                var key = (leaderId, followerId);
+                history[key] = history.GetValueOrDefault(key) + 1;
+            }
+        }
+
+        Assert.Equal(9, allPairings.Count);
+        Assert.Equal(9, allPairings.Distinct().Count());
+    }
+
+    [Fact]
     public void SelfPair_UnbalancedGroups_StillPairsOthers()
     {
         // Id(1) is in both groups, 3 leaders and 2 followers

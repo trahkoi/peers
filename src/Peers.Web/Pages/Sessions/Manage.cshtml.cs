@@ -24,7 +24,7 @@ public class ManageModel : PageModel
 
     public IReadOnlyList<Participant> Participants { get; private set; } = [];
 
-    public SpotlightRound? SpotlightRound { get; private set; }
+    public IReadOnlyList<SpotlightRound> SpotlightRounds { get; private set; } = [];
 
     [BindProperty]
     public string DancerName { get; set; } = string.Empty;
@@ -162,7 +162,7 @@ public class ManageModel : PageModel
         SessionId = sessionId;
         Session = session;
         Participants = _sessions.ListParticipants(sessionId);
-        SpotlightRound = _spotlights?.GetRound(sessionId);
+        SpotlightRounds = _spotlights?.GetRounds(sessionId) ?? [];
         return true;
     }
 }

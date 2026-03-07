@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Peers.Persistence;
 
@@ -10,9 +11,11 @@ using Peers.Persistence;
 namespace Peers.Persistence.Migrations
 {
     [DbContext(typeof(PeersDbContext))]
-    partial class PeersDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260307100912_AddSpotlightRoundNumber")]
+    partial class AddSpotlightRoundNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
@@ -59,8 +62,7 @@ namespace Peers.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SessionId", "RoundNumber")
-                        .IsUnique();
+                    b.HasIndex("SessionId");
 
                     b.ToTable("SpotlightRoundEntity");
                 });
