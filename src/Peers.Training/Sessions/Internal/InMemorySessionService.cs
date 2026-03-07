@@ -101,7 +101,7 @@ internal sealed class InMemorySessionService : ISessionService
             var session = GetSession(sessionId);
             return session.Participants.Values
                 .OrderBy(x => x.DancerName, StringComparer.OrdinalIgnoreCase)
-                .Select(x => new Participant(Guid.Empty, x.DancerName, x.Role))
+                .Select(x => new Participant(Guid.Empty, x.DancerName, x.Role, x.IsCoach))
                 .ToArray();
         }
     }
@@ -164,16 +164,58 @@ internal sealed class InMemorySessionService : ISessionService
         }
     }
 
-    public (Guid SessionId, string DancerName)? GetParticipantSession(Guid token)
+    public (Guid SessionId, string DancerName, bool IsCoach)? GetParticipantSession(Guid token)
     {
         lock (_sync)
         {
             if (_tokenIndex.TryGetValue(token, out var entry))
             {
-                return entry;
+                var session = GetSession(entry.SessionId);
+                if (session.Participants.TryGetValue(entry.DancerName, out var participant))
+                {
+                    return (entry.SessionId, entry.DancerName, participant.IsCoach);
+                }
+
+                return (entry.SessionId, entry.DancerName, false);
             }
 
             return null;
+        }
+    }
+
+    public void PromoteParticipant(Guid sessionId, string dancerName)
+    {
+        var normalizedDancerName = RequireName(dancerName, "Dancer name");
+
+        lock (_sync)
+        {
+            var session = GetSession(sessionId);
+            EnsureSessionIsActive(session);
+
+            if (!session.Participants.TryGetValue(normalizedDancerName, out var participant))
+            {
+                throw new SessionNotFoundException(sessionId);
+            }
+
+            session.Participants[normalizedDancerName] = participant with { IsCoach = true };
+        }
+    }
+
+    public void DemoteParticipant(Guid sessionId, string dancerName)
+    {
+        var normalizedDancerName = RequireName(dancerName, "Dancer name");
+
+        lock (_sync)
+        {
+            var session = GetSession(sessionId);
+            EnsureSessionIsActive(session);
+
+            if (!session.Participants.TryGetValue(normalizedDancerName, out var participant))
+            {
+                throw new SessionNotFoundException(sessionId);
+            }
+
+            session.Participants[normalizedDancerName] = participant with { IsCoach = false };
         }
     }
 
@@ -248,7 +290,7 @@ internal sealed class InMemorySessionService : ISessionService
         public Dictionary<string, ParticipantState> Participants { get; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
-    private sealed record ParticipantState(string DancerName, SessionRole Role, Guid Token = default);
+    private sealed record ParticipantState(string DancerName, SessionRole Role, Guid Token = default, bool IsCoach = false);
 
     private enum SessionStatus
     {

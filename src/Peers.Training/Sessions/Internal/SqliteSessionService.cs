@@ -118,7 +118,7 @@ internal sealed class SqliteSessionService : ISessionService
         return Participants
             .Where(p => p.SessionId == sessionId)
             .OrderBy(p => p.DancerName)
-            .Select(p => new Participant(p.DancerId, p.DancerName, p.Role))
+            .Select(p => new Participant(p.DancerId, p.DancerName, p.Role, p.IsCoach))
             .ToArray();
     }
 
@@ -197,7 +197,7 @@ internal sealed class SqliteSessionService : ISessionService
         return token;
     }
 
-    public (Guid SessionId, string DancerName)? GetParticipantSession(Guid token)
+    public (Guid SessionId, string DancerName, bool IsCoach)? GetParticipantSession(Guid token)
     {
         var participant = Participants.FirstOrDefault(p => p.Token == token);
 
@@ -206,7 +206,45 @@ internal sealed class SqliteSessionService : ISessionService
             return null;
         }
 
-        return (participant.SessionId, participant.DancerName);
+        return (participant.SessionId, participant.DancerName, participant.IsCoach);
+    }
+
+    public void PromoteParticipant(Guid sessionId, string dancerName)
+    {
+        var normalizedDancerName = RequireName(dancerName, "Dancer name");
+        var session = GetSession(sessionId);
+        EnsureSessionIsActive(session);
+
+        var participant = Participants.FirstOrDefault(p =>
+            p.SessionId == sessionId &&
+            p.DancerName.ToUpper() == normalizedDancerName.ToUpper());
+
+        if (participant is null)
+        {
+            throw new SessionNotFoundException(sessionId);
+        }
+
+        participant.IsCoach = true;
+        _db.SaveChanges();
+    }
+
+    public void DemoteParticipant(Guid sessionId, string dancerName)
+    {
+        var normalizedDancerName = RequireName(dancerName, "Dancer name");
+        var session = GetSession(sessionId);
+        EnsureSessionIsActive(session);
+
+        var participant = Participants.FirstOrDefault(p =>
+            p.SessionId == sessionId &&
+            p.DancerName.ToUpper() == normalizedDancerName.ToUpper());
+
+        if (participant is null)
+        {
+            throw new SessionNotFoundException(sessionId);
+        }
+
+        participant.IsCoach = false;
+        _db.SaveChanges();
     }
 
     private DancerEntity ResolveOrCreateDancer(string name)

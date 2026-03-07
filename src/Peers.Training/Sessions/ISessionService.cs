@@ -18,5 +18,9 @@ public interface ISessionService
 
     Guid JoinViaCode(string inviteCode, string dancerName, SessionRole role);
 
-    (Guid SessionId, string DancerName)? GetParticipantSession(Guid token);
+    (Guid SessionId, string DancerName, bool IsCoach)? GetParticipantSession(Guid token);
+
+    void PromoteParticipant(Guid sessionId, string dancerName);
+
+    void DemoteParticipant(Guid sessionId, string dancerName);
 }

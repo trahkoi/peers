@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Peers.Spotlights;
@@ -6,7 +5,6 @@ using Peers.Training.Sessions;
 
 namespace Peers.Web.Pages.Sessions;
 
-[Authorize]
 public class ManageModel : PageModel
 {
     private readonly ISessionService _sessions;
@@ -26,6 +24,10 @@ public class ManageModel : PageModel
 
     public SpotlightRound? SpotlightRound { get; private set; }
 
+    public bool IsAdminCoach { get; private set; }
+
+    public Guid? ParticipantToken { get; private set; }
+
     [BindProperty]
     public string DancerName { get; set; } = string.Empty;
 
@@ -38,90 +40,189 @@ public class ManageModel : PageModel
     [TempData]
     public string? FlashTone { get; set; }
 
-    public IActionResult OnGet(Guid id)
+    public IActionResult OnGet(Guid id, Guid? token)
     {
-        return LoadPageState(id) ? Page() : RedirectToPage("/Sessions/Index");
+        var authResult = Authorize(id, token);
+        if (authResult is not null) return authResult;
+
+        return LoadPageState(SessionId) ? Page() : RedirectToPage("/Sessions/Index");
     }
 
-    public IActionResult OnPostJoin(Guid id)
+    public IActionResult OnPostJoin(Guid id, Guid? token)
     {
+        var authResult = Authorize(id, token);
+        if (authResult is not null) return authResult;
+
         try
         {
-            _sessions.JoinSession(id, DancerName, Role);
+            _sessions.JoinSession(SessionId, DancerName, Role);
             FlashMessage = $"Added {DancerName.Trim()} as {Role.ToString().ToLowerInvariant()}.";
             FlashTone = "success";
-            return RedirectToPage(new { id });
+            return RedirectToManage();
         }
         catch (Exception ex)
         {
-            return HandleSessionException(ex, nameof(DancerName), id);
+            return HandleSessionException(ex, nameof(DancerName), SessionId);
         }
     }
 
-    public IActionResult OnPostLeave(Guid id, string dancerName)
+    public IActionResult OnPostLeave(Guid id, string dancerName, Guid? token)
     {
+        var authResult = Authorize(id, token);
+        if (authResult is not null) return authResult;
+
         try
         {
-            _sessions.LeaveSession(id, dancerName);
+            _sessions.LeaveSession(SessionId, dancerName);
             FlashMessage = $"{dancerName.Trim()} left the session.";
             FlashTone = "success";
-            return RedirectToPage(new { id });
+            return RedirectToManage();
         }
         catch (Exception ex)
         {
-            return HandleSessionException(ex, string.Empty, id);
+            return HandleSessionException(ex, string.Empty, SessionId);
         }
     }
 
-    public IActionResult OnPostEnd(Guid id)
+    public IActionResult OnPostEnd(Guid id, Guid? token)
     {
+        var authResult = Authorize(id, token);
+        if (authResult is not null) return authResult;
+
+        if (!IsAdminCoach) return Forbid();
+
         try
         {
-            _sessions.EndSession(id);
+            _sessions.EndSession(SessionId);
             FlashMessage = "Session ended. Attendance is now locked.";
             FlashTone = "info";
-            return RedirectToPage(new { id });
+            return RedirectToManage();
         }
         catch (Exception ex)
         {
-            return HandleSessionException(ex, string.Empty, id);
+            return HandleSessionException(ex, string.Empty, SessionId);
         }
     }
 
-    public IActionResult OnPostGenerateCode(Guid id)
+    public IActionResult OnPostGenerateCode(Guid id, Guid? token)
     {
+        var authResult = Authorize(id, token);
+        if (authResult is not null) return authResult;
+
+        if (!IsAdminCoach) return Forbid();
+
         try
         {
-            _sessions.GenerateInviteCode(id);
+            _sessions.GenerateInviteCode(SessionId);
             FlashMessage = "Invite code generated.";
             FlashTone = "success";
-            return RedirectToPage(new { id });
+            return RedirectToManage();
         }
         catch (Exception ex)
         {
-            return HandleSessionException(ex, string.Empty, id);
+            return HandleSessionException(ex, string.Empty, SessionId);
         }
     }
 
-    public IActionResult OnPostGenerateSpotlight(Guid id)
+    public IActionResult OnPostGenerateSpotlight(Guid id, Guid? token)
     {
+        var authResult = Authorize(id, token);
+        if (authResult is not null) return authResult;
+
         if (_spotlights is null)
-            return RedirectToPage(new { id });
+            return RedirectToManage();
 
         try
         {
-            var participants = _sessions.ListParticipants(id);
+            var participants = _sessions.ListParticipants(SessionId);
             var leaders = participants.Where(p => p.Role == SessionRole.Leader).Select(p => p.DancerId).ToList();
             var followers = participants.Where(p => p.Role == SessionRole.Follower).Select(p => p.DancerId).ToList();
-            _spotlights.GenerateRound(id, leaders, followers);
+            _spotlights.GenerateRound(SessionId, leaders, followers);
             FlashMessage = "Spotlight pairings generated.";
             FlashTone = "success";
-            return RedirectToPage(new { id });
+            return RedirectToManage();
         }
         catch (Exception ex)
         {
-            return HandleSessionException(ex, string.Empty, id);
+            return HandleSessionException(ex, string.Empty, SessionId);
         }
+    }
+
+    public IActionResult OnPostPromote(Guid id, string dancerName, Guid? token)
+    {
+        var authResult = Authorize(id, token);
+        if (authResult is not null) return authResult;
+
+        if (!IsAdminCoach) return Forbid();
+
+        try
+        {
+            _sessions.PromoteParticipant(SessionId, dancerName);
+            FlashMessage = $"{dancerName.Trim()} promoted to session coach.";
+            FlashTone = "success";
+            return RedirectToManage();
+        }
+        catch (Exception ex)
+        {
+            return HandleSessionException(ex, string.Empty, SessionId);
+        }
+    }
+
+    public IActionResult OnPostDemote(Guid id, string dancerName, Guid? token)
+    {
+        var authResult = Authorize(id, token);
+        if (authResult is not null) return authResult;
+
+        if (!IsAdminCoach) return Forbid();
+
+        try
+        {
+            _sessions.DemoteParticipant(SessionId, dancerName);
+            FlashMessage = $"{dancerName.Trim()} demoted to regular participant.";
+            FlashTone = "success";
+            return RedirectToManage();
+        }
+        catch (Exception ex)
+        {
+            return HandleSessionException(ex, string.Empty, SessionId);
+        }
+    }
+
+    private IActionResult? Authorize(Guid id, Guid? token)
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            IsAdminCoach = true;
+            SessionId = id;
+            return null;
+        }
+
+        if (token is { } t && t != Guid.Empty)
+        {
+            var entry = _sessions.GetParticipantSession(t);
+            if (entry is not null && entry.Value.IsCoach)
+            {
+                IsAdminCoach = false;
+                SessionId = entry.Value.SessionId;
+                ParticipantToken = t;
+                return null;
+            }
+
+            if (entry is not null)
+            {
+                return RedirectToPage("/Sessions/View", new { token = t });
+            }
+        }
+
+        return Challenge();
+    }
+
+    private IActionResult RedirectToManage()
+    {
+        if (ParticipantToken is { } t)
+            return RedirectToPage(new { id = SessionId, token = t });
+
+        return RedirectToPage(new { id = SessionId });
     }
 
     private IActionResult HandleSessionException(Exception ex, string field, Guid sessionId)
