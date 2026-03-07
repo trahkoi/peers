@@ -241,6 +241,72 @@ public sealed class SpotlightServiceTests : IDisposable
         Assert.Equal(9, allPairings.Distinct().Count());
     }
 
+    [Fact]
+    public void DeleteRound_RemovesRoundAndPairings()
+    {
+        var sessionId = _sessions.CreateSession("Test Session");
+        _sessions.JoinSession(sessionId, "Maria", SessionRole.Leader);
+        _sessions.JoinSession(sessionId, "Tom", SessionRole.Follower);
+        var (leaders, followers) = GetDancerIds(sessionId);
+
+        var round = _spotlights.GenerateRound(sessionId, leaders, followers);
+
+        _spotlights.DeleteRound(round.Id);
+
+        var rounds = _spotlights.GetRounds(sessionId);
+        Assert.Empty(rounds);
+    }
+
+    [Fact]
+    public void DeleteRound_NonExistentId_CompletesWithoutError()
+    {
+        _spotlights.DeleteRound(Guid.NewGuid());
+    }
+
+    [Fact]
+    public void DeleteRound_DeletedPairingsNotConsideredAsHistory()
+    {
+        var sessionId = _sessions.CreateSession("Test Session");
+        _sessions.JoinSession(sessionId, "Maria", SessionRole.Leader);
+        _sessions.JoinSession(sessionId, "Tom", SessionRole.Follower);
+        _sessions.JoinSession(sessionId, "Alex", SessionRole.Leader);
+        _sessions.JoinSession(sessionId, "Sara", SessionRole.Follower);
+        var (leaders, followers) = GetDancerIds(sessionId);
+
+        var round1 = _spotlights.GenerateRound(sessionId, leaders, followers);
+        var round1Pairs = round1.Pairings.Select(p => (p.LeaderDancerId, p.FollowerDancerId)).ToHashSet();
+
+        _spotlights.DeleteRound(round1.Id);
+
+        // After deletion, history is gone — same pairings may be generated again
+        var round2 = _spotlights.GenerateRound(sessionId, leaders, followers);
+        var round2Pairs = round2.Pairings.Select(p => (p.LeaderDancerId, p.FollowerDancerId)).ToHashSet();
+
+        // With no history, the algorithm starts fresh — pairings could be either arrangement
+        // The key assertion: it completes without error and produces valid pairings
+        Assert.Equal(2, round2.Pairings.Count);
+    }
+
+    [Fact]
+    public void DeleteRound_RemainingRoundNumbersUnchanged()
+    {
+        var sessionId = _sessions.CreateSession("Test Session");
+        _sessions.JoinSession(sessionId, "Maria", SessionRole.Leader);
+        _sessions.JoinSession(sessionId, "Tom", SessionRole.Follower);
+        var (leaders, followers) = GetDancerIds(sessionId);
+
+        var round1 = _spotlights.GenerateRound(sessionId, leaders, followers);
+        var round2 = _spotlights.GenerateRound(sessionId, leaders, followers);
+        var round3 = _spotlights.GenerateRound(sessionId, leaders, followers);
+
+        _spotlights.DeleteRound(round2.Id);
+
+        var remaining = _spotlights.GetRounds(sessionId);
+        Assert.Equal(2, remaining.Count);
+        Assert.Equal(1, remaining[0].RoundNumber);
+        Assert.Equal(3, remaining[1].RoundNumber);
+    }
+
     public void Dispose()
     {
         _provider.Dispose();

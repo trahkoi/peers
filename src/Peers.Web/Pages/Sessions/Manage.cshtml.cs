@@ -148,6 +148,20 @@ public class ManageModel : PageModel
         }
     }
 
+    public IActionResult OnPostDeleteSpotlight(Guid id, Guid roundId, Guid? token)
+    {
+        var authResult = Authorize(id, token);
+        if (authResult is not null) return authResult;
+
+        if (_spotlights is null)
+            return RedirectToManage();
+
+        _spotlights.DeleteRound(roundId);
+        FlashMessage = "Spotlight round deleted.";
+        FlashTone = "success";
+        return RedirectToManage();
+    }
+
     public IActionResult OnPostPromote(Guid id, string dancerName, Guid? token)
     {
         var authResult = Authorize(id, token);
