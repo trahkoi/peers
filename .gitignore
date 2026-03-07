@@ -43,6 +43,8 @@ CodeCoverage/
 
 # SQLite databases
 *.db
+*.db-shm
+*.db-wal
 
 # MSBuild Binary and Structured Log
 *.binlog
