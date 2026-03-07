@@ -8,6 +8,10 @@ param location string = resourceGroup().location
 @allowed(['F1', 'B1', 'B2', 'B3'])
 param appServicePlanSku string = 'B1'
 
+@description('SQLite connection string for the Peers database (e.g. Data Source=/home/data/peers.db).')
+@secure()
+param peersDbConnectionString string
+
 var planName = '${appName}-plan'
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
@@ -44,7 +48,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
         }
         {
           name: 'ConnectionStrings__Peers'
-          value: 'Data Source=/home/data/peers.db'
+          value: peersDbConnectionString
         }
       ]
     }
