@@ -6,9 +6,9 @@
 }
 
 <section class="hero">
-    <p class="eyebrow">Manage Attendance</p>
+    <p class="eyebrow">Manage Session</p>
     <h1>@currentSession.Name</h1>
-    <p class="lead">Track who is in class and close attendance when everyone is in.</p>
+    <p class="lead">Manage session attendance and activities</p>
 </section>
 
 @if (!string.IsNullOrWhiteSpace(Model.FlashMessage))
@@ -35,143 +35,148 @@
     <article class="panel">
         <div class="panel-heading">
             <h2>Session Status</h2>
-            <span class="status-chip @(currentSession.IsEnded ? "status-ended" : "status-active")">@(currentSession.IsEnded ? "ended" : "active")</span>
-        </div>
-        <p class="meta">ID: <code>@Model.SessionId</code></p>
-        <p class="meta">@currentSession.ParticipantCount dancers</p>
-
-        @if (!currentSession.IsEnded)
-        {
-            <form method="post" asp-page-handler="End" asp-route-id="@Model.SessionId" class="js-busy-form top-gap">
-                <button type="submit" class="btn btn-quiet" data-confirm="End this session? Dancers can no longer join or leave." data-busy-text="Ending...">
-                    End session
-                </button>
-            </form>
-        }
-    </article>
-
-    <article class="panel">
-        <h2>Invite code</h2>
-
-        @if (currentSession.IsEnded)
-        {
-            <p class="subtle">Session has ended. Invite code is no longer active.</p>
-        }
-        else if (currentSession.InviteCode is { } code)
-        {
-            <p>Share this code with participants so they can join:</p>
-            <p class="invite-code"><code>@code</code></p>
-            <p class="subtle">Or share the link: <a href="/sessions/join?code=@code">/sessions/join?code=@code</a></p>
-            <form method="post" asp-page-handler="GenerateCode" asp-route-id="@Model.SessionId" class="top-gap js-busy-form">
-                <button type="submit" class="btn btn-quiet" data-busy-text="Regenerating...">Regenerate code</button>
-            </form>
-        }
-        else
-        {
-            <p class="subtle">No invite code yet. Generate one to let participants join.</p>
-            <form method="post" asp-page-handler="GenerateCode" asp-route-id="@Model.SessionId" class="top-gap js-busy-form">
-                <button type="submit" class="btn btn-primary" data-busy-text="Generating...">Generate invite code</button>
-            </form>
-        }
-    </article>
-
-    <article class="panel">
-        <h2>Add dancer</h2>
-
-        @if (currentSession.IsEnded)
-        {
-            <p class="subtle">This session is ended. Attendance is read-only.</p>
-        }
-        else
-        {
-            <form method="post" asp-page-handler="Join" asp-route-id="@Model.SessionId" class="stack js-busy-form">
-                <label asp-for="DancerName">Dancer name</label>
-                <input asp-for="DancerName" placeholder="Alex" autocomplete="off" />
-
-                <partial name="_RoleToggle" />
-
-                <button type="submit" class="btn btn-primary" data-busy-text="Adding...">Add to session</button>
-            </form>
-        }
-    </article>
-
-    <article class="panel panel-wide">
-        <div class="panel-heading">
-            <h2>Spotlight</h2>
-        </div>
-
-        @if (Model.Participants.Count(p => p.Role == Peers.Training.Sessions.SessionRole.Leader) > 0
-             && Model.Participants.Count(p => p.Role == Peers.Training.Sessions.SessionRole.Follower) > 0)
-        {
-            <form method="post" asp-page-handler="GenerateSpotlight" asp-route-id="@Model.SessionId" class="js-busy-form">
-                <button type="submit" class="btn btn-primary" data-busy-text="Generating...">
-                    @(Model.SpotlightRound is not null ? "Regenerate pairings" : "Generate pairings")
-                </button>
-            </form>
-        }
-        else
-        {
-            <p class="subtle">Add at least one leader and one follower to generate spotlight pairings.</p>
-        }
-
-        @if (Model.SpotlightRound is { } round && round.Pairings.Count > 0)
-        {
-            var dancerNames = Model.Participants.ToDictionary(p => p.DancerId, p => p.DancerName);
-            <table class="top-gap">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Leader</th>
-                        <th>Follower</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var pairing in round.Pairings)
-                    {
-                        <tr>
-                            <td>@pairing.Order</td>
-                            <td>@(dancerNames.GetValueOrDefault(pairing.LeaderDancerId, "Unknown"))</td>
-                            <td>@(dancerNames.GetValueOrDefault(pairing.FollowerDancerId, "Unknown"))</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-    </article>
-
-    <article class="panel panel-wide">
-        <div class="panel-heading">
-            <h2>Participants</h2>
-            <p class="meta">@Model.Participants.Count active</p>
-        </div>
-
-        @if (Model.Participants.Count == 0)
-        {
-            <div class="empty-state">
-                <p>No dancers yet.</p>
-                <p class="subtle">Add the first participant using the Add dancer form.</p>
+            <span
+                class="status-chip @(currentSession.IsEnded ? "status-ended" : "status-active")">@(currentSession.IsEnded
+                                ? "ended" : "active")</span>
             </div>
-        }
-        else
-        {
-            <ul class="participants">
-                @foreach (var dancer in Model.Participants)
-                {
-                    <li>
-                        <div>
-                            <strong>@dancer.DancerName</strong>
-                            <span class="role">@dancer.Role.ToString().ToLowerInvariant()</span>
-                        </div>
-                        @if (!currentSession.IsEnded)
+            <p class="meta">ID: <code>@Model.SessionId</code></p>
+            <p class="meta">@currentSession.ParticipantCount dancers</p>
+
+            @if (!currentSession.IsEnded)
+            {
+                <form method="post" asp-page-handler="End" asp-route-id="@Model.SessionId" class="js-busy-form top-gap">
+                    <button type="submit" class="btn btn-quiet"
+                            data-confirm="End this session? Dancers can no longer join or leave." data-busy-text="Ending...">
+                        End session
+                    </button>
+                </form>
+            }
+        </article>
+
+        <article class="panel">
+            <h2>Invite code</h2>
+
+            @if (currentSession.IsEnded)
+            {
+                <p class="subtle">Session has ended. Invite code is no longer active.</p>
+            }
+            else if (currentSession.InviteCode is { } code)
+            {
+                <p>Share this code with participants so they can join:</p>
+                <p class="invite-code"><code>@code</code></p>
+                <p class="subtle">Or share the link: <a href="/sessions/join?code=@code">/sessions/join?code=@code</a></p>
+                <form method="post" asp-page-handler="GenerateCode" asp-route-id="@Model.SessionId"
+                      class="top-gap js-busy-form">
+                    <button type="submit" class="btn btn-quiet" data-busy-text="Regenerating...">Regenerate code</button>
+                </form>
+            }
+            else
+            {
+                <p class="subtle">No invite code yet. Generate one to let participants join.</p>
+                <form method="post" asp-page-handler="GenerateCode" asp-route-id="@Model.SessionId"
+                      class="top-gap js-busy-form">
+                    <button type="submit" class="btn btn-primary" data-busy-text="Generating...">Generate invite code</button>
+                </form>
+            }
+        </article>
+
+        <article class="panel">
+            <h2>Add dancer</h2>
+
+            @if (currentSession.IsEnded)
+            {
+                <p class="subtle">This session is ended. Attendance is read-only.</p>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Join" asp-route-id="@Model.SessionId" class="stack js-busy-form">
+                    <label asp-for="DancerName">Dancer name</label>
+                    <input asp-for="DancerName" placeholder="Alex" autocomplete="off" />
+
+                    <partial name="_RoleToggle" />
+
+                    <button type="submit" class="btn btn-primary" data-busy-text="Adding...">Add to session</button>
+                </form>
+            }
+        </article>
+
+        <article class="panel panel-wide">
+            <div class="panel-heading">
+                <h2>Spotlight</h2>
+            </div>
+
+            @if (Model.Participants.Count(p => p.Role == Peers.Training.Sessions.SessionRole.Leader) > 0
+                         && Model.Participants.Count(p => p.Role == Peers.Training.Sessions.SessionRole.Follower) > 0)
+            {
+                <form method="post" asp-page-handler="GenerateSpotlight" asp-route-id="@Model.SessionId" class="js-busy-form">
+                    <button type="submit" class="btn btn-primary" data-busy-text="Generating...">
+                        @(Model.SpotlightRound is not null ? "Regenerate pairings" : "Generate pairings")
+                    </button>
+                </form>
+            }
+            else
+            {
+                <p class="subtle">Add at least one leader and one follower to generate spotlight pairings.</p>
+            }
+
+            @if (Model.SpotlightRound is { } round && round.Pairings.Count > 0)
+            {
+                var dancerNames = Model.Participants.ToDictionary(p => p.DancerId, p => p.DancerName);
+                <table class="top-gap">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Leader</th>
+                            <th>Follower</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pairing in round.Pairings)
                         {
-                            <form method="post" asp-page-handler="Leave" asp-route-id="@Model.SessionId" class="js-busy-form">
-                                <input type="hidden" name="dancerName" value="@dancer.DancerName" />
-                                <button type="submit" class="btn btn-text" data-busy-text="Removing...">Remove</button>
-                            </form>
+                            <tr>
+                                <td>@pairing.Order</td>
+                                <td>@(dancerNames.GetValueOrDefault(pairing.LeaderDancerId, "Unknown"))</td>
+                                <td>@(dancerNames.GetValueOrDefault(pairing.FollowerDancerId, "Unknown"))</td>
+                            </tr>
                         }
-                    </li>
-                }
-            </ul>
-        }
-    </article>
-</section>
+                    </tbody>
+                </table>
+            }
+        </article>
+
+        <article class="panel panel-wide">
+            <div class="panel-heading">
+                <h2>Participants</h2>
+                <p class="meta">@Model.Participants.Count active</p>
+            </div>
+
+            @if (Model.Participants.Count == 0)
+            {
+                <div class="empty-state">
+                    <p>No dancers yet.</p>
+                    <p class="subtle">Add the first participant using the Add dancer form.</p>
+                </div>
+            }
+            else
+            {
+                <ul class="participants">
+                    @foreach (var dancer in Model.Participants)
+                    {
+                        <li>
+                            <div>
+                                <strong>@dancer.DancerName</strong>
+                                <span class="role">@dancer.Role.ToString().ToLowerInvariant()</span>
+                            </div>
+                            @if (!currentSession.IsEnded)
+                            {
+                                <form method="post" asp-page-handler="Leave" asp-route-id="@Model.SessionId" class="js-busy-form">
+                                    <input type="hidden" name="dancerName" value="@dancer.DancerName" />
+                                    <button type="submit" class="btn btn-text" data-busy-text="Removing...">Remove</button>
+                                </form>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </article>
+    </section>
