@@ -118,7 +118,7 @@ internal sealed class SqliteSessionService : ISessionService
         return Participants
             .Where(p => p.SessionId == sessionId)
             .OrderBy(p => p.DancerName)
-            .Select(p => new Participant(p.DancerId, p.DancerName, p.Role, p.IsCoach))
+            .Select(p => new Participant(p.DancerId, p.DancerName, p.Role, p.IsCoach, p.Token != null))
             .ToArray();
     }
 
@@ -222,6 +222,12 @@ internal sealed class SqliteSessionService : ISessionService
         if (participant is null)
         {
             throw new SessionNotFoundException(sessionId);
+        }
+
+        if (participant.Token is null || participant.Token == Guid.Empty)
+        {
+            throw new SessionValidationException(
+                $"Dancer '{normalizedDancerName}' cannot be promoted because they have no participant token. Only participants who joined via invite code can be promoted.");
         }
 
         participant.IsCoach = true;

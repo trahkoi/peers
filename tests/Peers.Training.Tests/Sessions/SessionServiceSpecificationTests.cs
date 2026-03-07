@@ -209,7 +209,8 @@ public abstract class SessionServiceSpecificationTests : IDisposable
     {
         var service = CreateService();
         var sessionId = service.CreateSession("Friday");
-        service.JoinSession(sessionId, "Jules", SessionRole.Leader);
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
 
         service.PromoteParticipant(sessionId, "Jules");
 
@@ -224,7 +225,8 @@ public abstract class SessionServiceSpecificationTests : IDisposable
     {
         var service = CreateService();
         var sessionId = service.CreateSession("Friday");
-        service.JoinSession(sessionId, "Jules", SessionRole.Leader);
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
 
         service.PromoteParticipant(sessionId, "Jules");
         service.PromoteParticipant(sessionId, "Jules");
@@ -238,7 +240,8 @@ public abstract class SessionServiceSpecificationTests : IDisposable
     {
         var service = CreateService();
         var sessionId = service.CreateSession("Friday");
-        service.JoinSession(sessionId, "Jules", SessionRole.Leader);
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
         service.PromoteParticipant(sessionId, "Jules");
 
         service.DemoteParticipant(sessionId, "Jules");
@@ -252,7 +255,8 @@ public abstract class SessionServiceSpecificationTests : IDisposable
     {
         var service = CreateService();
         var sessionId = service.CreateSession("Friday");
-        service.JoinSession(sessionId, "Jules", SessionRole.Leader);
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
 
         service.DemoteParticipant(sessionId, "Jules");
         service.DemoteParticipant(sessionId, "Jules");
@@ -266,7 +270,8 @@ public abstract class SessionServiceSpecificationTests : IDisposable
     {
         var service = CreateService();
         var sessionId = service.CreateSession("Friday");
-        service.JoinSession(sessionId, "Jules", SessionRole.Leader);
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
         service.EndSession(sessionId);
 
         Assert.Throws<SessionConflictException>(() => service.PromoteParticipant(sessionId, "Jules"));
@@ -277,7 +282,8 @@ public abstract class SessionServiceSpecificationTests : IDisposable
     {
         var service = CreateService();
         var sessionId = service.CreateSession("Friday");
-        service.JoinSession(sessionId, "Jules", SessionRole.Leader);
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
         service.PromoteParticipant(sessionId, "Jules");
         service.EndSession(sessionId);
 
@@ -291,6 +297,16 @@ public abstract class SessionServiceSpecificationTests : IDisposable
         var sessionId = service.CreateSession("Friday");
 
         Assert.Throws<SessionNotFoundException>(() => service.PromoteParticipant(sessionId, "Ghost"));
+    }
+
+    [Fact]
+    public void PromoteParticipant_WithoutToken_ThrowsValidation()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        service.JoinSession(sessionId, "Jules", SessionRole.Leader);
+
+        Assert.Throws<SessionValidationException>(() => service.PromoteParticipant(sessionId, "Jules"));
     }
 
     [Fact]

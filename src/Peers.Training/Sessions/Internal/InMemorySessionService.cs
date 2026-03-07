@@ -101,7 +101,7 @@ internal sealed class InMemorySessionService : ISessionService
             var session = GetSession(sessionId);
             return session.Participants.Values
                 .OrderBy(x => x.DancerName, StringComparer.OrdinalIgnoreCase)
-                .Select(x => new Participant(Guid.Empty, x.DancerName, x.Role, x.IsCoach))
+                .Select(x => new Participant(Guid.Empty, x.DancerName, x.Role, x.IsCoach, x.Token != Guid.Empty))
                 .ToArray();
         }
     }
@@ -195,6 +195,12 @@ internal sealed class InMemorySessionService : ISessionService
             if (!session.Participants.TryGetValue(normalizedDancerName, out var participant))
             {
                 throw new SessionNotFoundException(sessionId);
+            }
+
+            if (participant.Token == Guid.Empty)
+            {
+                throw new SessionValidationException(
+                    $"Dancer '{normalizedDancerName}' cannot be promoted because they have no participant token. Only participants who joined via invite code can be promoted.");
             }
 
             session.Participants[normalizedDancerName] = participant with { IsCoach = true };

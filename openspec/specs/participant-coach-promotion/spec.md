@@ -1,11 +1,16 @@
 ### Requirement: Coach can promote a participant to session coach
-The system SHALL allow an authenticated coach to promote any participant in an active session to a session coach. Promotion grants the participant management capabilities for that session only. A participant's dance role (Leader/Follower) SHALL remain unchanged by promotion.
+The system SHALL allow an authenticated coach to promote a participant in an active session to a session coach, provided the participant has a personal token (i.e., joined via invite code). Promotion grants the participant management capabilities for that session only. A participant's dance role (Leader/Follower) SHALL remain unchanged by promotion. Participants added manually by the coach (without a token) SHALL NOT be eligible for promotion.
 
 #### Scenario: Successful promotion
-- **WHEN** a coach promotes a participant in an active session
+- **WHEN** a coach promotes a participant who has a token in an active session
 - **THEN** the participant's `IsCoach` flag is set to true
 - **THEN** the Manage page reflects the promotion immediately
 - **THEN** the participant's dance role (Leader/Follower) is unchanged
+
+#### Scenario: Promotion of participant without token
+- **WHEN** a coach attempts to promote a participant who was added manually (no token)
+- **THEN** the system returns a validation error indicating only invite-joined participants can be promoted
+- **THEN** the Promote button is not shown for tokenless participants in the UI
 
 #### Scenario: Promotion in ended session
 - **WHEN** a coach attempts to promote a participant in an ended session
