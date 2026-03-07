@@ -11,7 +11,8 @@ internal sealed class SpotlightsEntityConfiguration : IModuleEntityConfiguration
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.SessionId).IsRequired();
-            entity.HasIndex(e => e.SessionId).IsUnique();
+            entity.Property(e => e.RoundNumber).IsRequired();
+            entity.HasIndex(e => e.SessionId);
         });
 
         modelBuilder.Entity<PairingEntity>(entity =>

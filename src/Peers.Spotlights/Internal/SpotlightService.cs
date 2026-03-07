@@ -23,20 +23,15 @@ internal sealed class SpotlightService : ISpotlightService
         var historicalCounts = GetHistoricalCounts(allDancerIds);
         var pairings = PairingAlgorithm.GeneratePairings(leaderDancerIds, followerDancerIds, historicalCounts);
 
-        // Remove existing round for this session (one round per session)
-        var existingRound = Rounds
-            .Include(r => r.Pairings)
-            .FirstOrDefault(r => r.SessionId == sessionId);
-
-        if (existingRound is not null)
-        {
-            Rounds.Remove(existingRound);
-        }
+        var nextRoundNumber = (Rounds
+            .Where(r => r.SessionId == sessionId)
+            .Max(r => (int?)r.RoundNumber) ?? 0) + 1;
 
         var round = new SpotlightRoundEntity
         {
             Id = Guid.NewGuid(),
             SessionId = sessionId,
+            RoundNumber = nextRoundNumber,
             CreatedAt = DateTime.UtcNow,
             Pairings = pairings.Select((p, i) => new PairingEntity
             {
@@ -53,13 +48,15 @@ internal sealed class SpotlightService : ISpotlightService
         return ToDto(round);
     }
 
-    public SpotlightRound? GetRound(Guid sessionId)
+    public IReadOnlyList<SpotlightRound> GetRounds(Guid sessionId)
     {
-        var round = Rounds
+        return Rounds
             .Include(r => r.Pairings)
-            .FirstOrDefault(r => r.SessionId == sessionId);
-
-        return round is null ? null : ToDto(round);
+            .Where(r => r.SessionId == sessionId)
+            .OrderBy(r => r.RoundNumber)
+            .AsEnumerable()
+            .Select(ToDto)
+            .ToList();
     }
 
     private Dictionary<(Guid LeaderId, Guid FollowerId), int> GetHistoricalCounts(
@@ -83,6 +80,7 @@ internal sealed class SpotlightService : ISpotlightService
         return new SpotlightRound(
             entity.Id,
             entity.SessionId,
+            entity.RoundNumber,
             entity.CreatedAt,
             entity.Pairings
                 .OrderBy(p => p.Order)

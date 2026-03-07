@@ -110,7 +110,7 @@
             {
                 <form method="post" asp-page-handler="GenerateSpotlight" asp-route-id="@Model.SessionId" class="js-busy-form">
                     <button type="submit" class="btn btn-primary" data-busy-text="Generating...">
-                        @(Model.SpotlightRound is not null ? "Regenerate pairings" : "Generate pairings")
+                        @(Model.SpotlightRounds.Count > 0 ? "Generate next round" : "Generate pairings")
                     </button>
                 </form>
             }
@@ -119,28 +119,35 @@
                 <p class="subtle">Add at least one leader and one follower to generate spotlight pairings.</p>
             }
 
-            @if (Model.SpotlightRound is { } round && round.Pairings.Count > 0)
+            @if (Model.SpotlightRounds.Count > 0)
             {
                 var dancerNames = Model.Participants.ToDictionary(p => p.DancerId, p => p.DancerName);
-                <table class="top-gap">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Leader</th>
-                            <th>Follower</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var pairing in round.Pairings)
-                        {
-                            <tr>
-                                <td>@pairing.Order</td>
-                                <td>@(dancerNames.GetValueOrDefault(pairing.LeaderDancerId, "Unknown"))</td>
-                                <td>@(dancerNames.GetValueOrDefault(pairing.FollowerDancerId, "Unknown"))</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                @foreach (var round in Model.SpotlightRounds)
+                {
+                    <h3 class="top-gap">Round @round.RoundNumber</h3>
+                    @if (round.Pairings.Count > 0)
+                    {
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Leader</th>
+                                    <th>Follower</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var pairing in round.Pairings)
+                                {
+                                    <tr>
+                                        <td>@pairing.Order</td>
+                                        <td>@(dancerNames.GetValueOrDefault(pairing.LeaderDancerId, "Unknown"))</td>
+                                        <td>@(dancerNames.GetValueOrDefault(pairing.FollowerDancerId, "Unknown"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                }
             }
         </article>
 

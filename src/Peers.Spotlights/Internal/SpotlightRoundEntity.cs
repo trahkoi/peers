@@ -6,6 +6,8 @@ internal sealed class SpotlightRoundEntity
 
     public Guid SessionId { get; set; }
 
+    public int RoundNumber { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public List<PairingEntity> Pairings { get; set; } = [];
