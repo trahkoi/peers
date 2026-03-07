@@ -12,6 +12,8 @@ internal sealed class ParticipantEntity
 
     public SessionRole Role { get; set; }
 
+    public bool IsCoach { get; set; }
+
     public Guid? Token { get; set; }
 
     public SessionEntity Session { get; set; } = null!;

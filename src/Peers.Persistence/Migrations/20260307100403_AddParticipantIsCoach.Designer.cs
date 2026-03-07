@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Peers.Persistence;
 
@@ -10,9 +11,11 @@ using Peers.Persistence;
 namespace Peers.Persistence.Migrations
 {
     [DbContext(typeof(PeersDbContext))]
-    partial class PeersDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260307100403_AddParticipantIsCoach")]
+    partial class AddParticipantIsCoach
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
@@ -51,15 +54,12 @@ namespace Peers.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("RoundNumber")
-                        .HasColumnType("INTEGER");
-
                     b.Property<Guid>("SessionId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SessionId", "RoundNumber")
+                    b.HasIndex("SessionId")
                         .IsUnique();
 
                     b.ToTable("SpotlightRoundEntity");

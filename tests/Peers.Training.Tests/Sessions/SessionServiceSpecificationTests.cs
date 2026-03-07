@@ -203,4 +203,139 @@ public abstract class SessionServiceSpecificationTests : IDisposable
         Assert.NotNull(entry);
         Assert.Equal("Mika", entry.Value.DancerName);
     }
+
+    [Fact]
+    public void PromoteParticipant_SetsIsCoachFlag()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
+
+        service.PromoteParticipant(sessionId, "Jules");
+
+        var participants = service.ListParticipants(sessionId);
+        var jules = Assert.Single(participants);
+        Assert.True(jules.IsCoach);
+        Assert.Equal(SessionRole.Leader, jules.Role);
+    }
+
+    [Fact]
+    public void PromoteParticipant_IsIdempotent()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
+
+        service.PromoteParticipant(sessionId, "Jules");
+        service.PromoteParticipant(sessionId, "Jules");
+
+        var participants = service.ListParticipants(sessionId);
+        Assert.True(Assert.Single(participants).IsCoach);
+    }
+
+    [Fact]
+    public void DemoteParticipant_ClearsIsCoachFlag()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
+        service.PromoteParticipant(sessionId, "Jules");
+
+        service.DemoteParticipant(sessionId, "Jules");
+
+        var participants = service.ListParticipants(sessionId);
+        Assert.False(Assert.Single(participants).IsCoach);
+    }
+
+    [Fact]
+    public void DemoteParticipant_IsIdempotent()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
+
+        service.DemoteParticipant(sessionId, "Jules");
+        service.DemoteParticipant(sessionId, "Jules");
+
+        var participants = service.ListParticipants(sessionId);
+        Assert.False(Assert.Single(participants).IsCoach);
+    }
+
+    [Fact]
+    public void PromoteParticipant_InEndedSession_ThrowsConflict()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
+        service.EndSession(sessionId);
+
+        Assert.Throws<SessionConflictException>(() => service.PromoteParticipant(sessionId, "Jules"));
+    }
+
+    [Fact]
+    public void DemoteParticipant_InEndedSession_ThrowsConflict()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        service.JoinViaCode(code, "Jules", SessionRole.Leader);
+        service.PromoteParticipant(sessionId, "Jules");
+        service.EndSession(sessionId);
+
+        Assert.Throws<SessionConflictException>(() => service.DemoteParticipant(sessionId, "Jules"));
+    }
+
+    [Fact]
+    public void PromoteParticipant_UnknownDancer_ThrowsNotFound()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+
+        Assert.Throws<SessionNotFoundException>(() => service.PromoteParticipant(sessionId, "Ghost"));
+    }
+
+    [Fact]
+    public void PromoteParticipant_WithoutToken_ThrowsValidation()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        service.JoinSession(sessionId, "Jules", SessionRole.Leader);
+
+        Assert.Throws<SessionValidationException>(() => service.PromoteParticipant(sessionId, "Jules"));
+    }
+
+    [Fact]
+    public void GetParticipantSession_ReturnsIsCoachFlag()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        var token = service.JoinViaCode(code, "Jules", SessionRole.Leader);
+
+        Assert.False(service.GetParticipantSession(token)!.Value.IsCoach);
+
+        service.PromoteParticipant(sessionId, "Jules");
+
+        Assert.True(service.GetParticipantSession(token)!.Value.IsCoach);
+    }
+
+    [Fact]
+    public void LeaveSession_RemovesPromotedParticipantAndInvalidatesToken()
+    {
+        var service = CreateService();
+        var sessionId = service.CreateSession("Friday");
+        var code = service.GenerateInviteCode(sessionId);
+        var token = service.JoinViaCode(code, "Jules", SessionRole.Leader);
+        service.PromoteParticipant(sessionId, "Jules");
+
+        service.LeaveSession(sessionId, "Jules");
+
+        Assert.Null(service.GetParticipantSession(token));
+        Assert.Empty(service.ListParticipants(sessionId));
+    }
 }

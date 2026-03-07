@@ -42,9 +42,9 @@
             <p class="meta">ID: <code>@Model.SessionId</code></p>
             <p class="meta">@currentSession.ParticipantCount dancers</p>
 
-            @if (!currentSession.IsEnded)
+            @if (!currentSession.IsEnded && Model.IsAdminCoach)
             {
-                <form method="post" asp-page-handler="End" asp-route-id="@Model.SessionId" class="js-busy-form top-gap">
+                <form method="post" asp-page-handler="End" asp-route-id="@Model.SessionId" asp-route-token="@Model.ParticipantToken" class="js-busy-form top-gap">
                     <button type="submit" class="btn btn-quiet"
                             data-confirm="End this session? Dancers can no longer join or leave." data-busy-text="Ending...">
                         End session
@@ -53,6 +53,8 @@
             }
         </article>
 
+        @if (Model.IsAdminCoach)
+        {
         <article class="panel">
             <h2>Invite code</h2>
 
@@ -79,6 +81,7 @@
                 </form>
             }
         </article>
+        }
 
         <article class="panel">
             <h2>Add dancer</h2>
@@ -89,7 +92,7 @@
             }
             else
             {
-                <form method="post" asp-page-handler="Join" asp-route-id="@Model.SessionId" class="stack js-busy-form">
+                <form method="post" asp-page-handler="Join" asp-route-id="@Model.SessionId" asp-route-token="@Model.ParticipantToken" class="stack js-busy-form">
                     <label asp-for="DancerName">Dancer name</label>
                     <input asp-for="DancerName" placeholder="Alex" autocomplete="off" />
 
@@ -108,7 +111,7 @@
             @if (Model.Participants.Count(p => p.Role == Peers.Training.Sessions.SessionRole.Leader) > 0
                          && Model.Participants.Count(p => p.Role == Peers.Training.Sessions.SessionRole.Follower) > 0)
             {
-                <form method="post" asp-page-handler="GenerateSpotlight" asp-route-id="@Model.SessionId" class="js-busy-form">
+                <form method="post" asp-page-handler="GenerateSpotlight" asp-route-id="@Model.SessionId" asp-route-token="@Model.ParticipantToken" class="js-busy-form">
                     <button type="submit" class="btn btn-primary" data-busy-text="Generating...">
                         @(Model.SpotlightRounds.Count > 0 ? "Generate next round" : "Generate pairings")
                     </button>
@@ -173,13 +176,36 @@
                             <div>
                                 <strong>@dancer.DancerName</strong>
                                 <span class="role">@dancer.Role.ToString().ToLowerInvariant()</span>
+                                @if (dancer.IsCoach)
+                                {
+                                    <span class="role">coach</span>
+                                }
                             </div>
                             @if (!currentSession.IsEnded)
                             {
-                                <form method="post" asp-page-handler="Leave" asp-route-id="@Model.SessionId" class="js-busy-form">
-                                    <input type="hidden" name="dancerName" value="@dancer.DancerName" />
-                                    <button type="submit" class="btn btn-text" data-busy-text="Removing...">Remove</button>
-                                </form>
+                                <div class="actions">
+                                    @if (Model.IsAdminCoach)
+                                    {
+                                        @if (dancer.IsCoach)
+                                        {
+                                            <form method="post" asp-page-handler="Demote" asp-route-id="@Model.SessionId" asp-route-token="@Model.ParticipantToken" class="js-busy-form">
+                                                <input type="hidden" name="dancerName" value="@dancer.DancerName" />
+                                                <button type="submit" class="btn btn-text" data-busy-text="Demoting...">Demote</button>
+                                            </form>
+                                        }
+                                        else if (dancer.HasToken)
+                                        {
+                                            <form method="post" asp-page-handler="Promote" asp-route-id="@Model.SessionId" asp-route-token="@Model.ParticipantToken" class="js-busy-form">
+                                                <input type="hidden" name="dancerName" value="@dancer.DancerName" />
+                                                <button type="submit" class="btn btn-text" data-busy-text="Promoting...">Promote</button>
+                                            </form>
+                                        }
+                                    }
+                                    <form method="post" asp-page-handler="Leave" asp-route-id="@Model.SessionId" asp-route-token="@Model.ParticipantToken" class="js-busy-form">
+                                        <input type="hidden" name="dancerName" value="@dancer.DancerName" />
+                                        <button type="submit" class="btn btn-text" data-busy-text="Removing...">Remove</button>
+                                    </form>
+                                </div>
                             }
                         </li>
                     }

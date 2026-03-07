@@ -45,6 +45,10 @@ else
         <p class="eyebrow">Training Session</p>
         <h1>@session.Name</h1>
         <p class="lead">You are joined as <strong>@Model.DancerName</strong>.</p>
+        @if (Model.IsCoach)
+        {
+            <a href="/sessions/@session.SessionId?token=@Model.Token" class="btn btn-primary">Manage Session</a>
+        }
     </section>
 
     <section class="session-shell">

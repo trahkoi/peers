@@ -19,6 +19,10 @@ public class ViewModel : PageModel
 
     public string DancerName { get; private set; } = string.Empty;
 
+    public bool IsCoach { get; private set; }
+
+    public Guid Token { get; private set; }
+
     public bool TokenMissing { get; private set; }
 
     public bool TokenInvalid { get; private set; }
@@ -47,6 +51,8 @@ public class ViewModel : PageModel
 
         Session = session;
         DancerName = entry.Value.DancerName;
+        IsCoach = entry.Value.IsCoach;
+        Token = token;
         Participants = _sessions.ListParticipants(session.SessionId);
         return Page();
     }
