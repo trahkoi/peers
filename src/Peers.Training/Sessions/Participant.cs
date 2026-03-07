@@ -1,3 +1,3 @@
 namespace Peers.Training.Sessions;
 
-public sealed record Participant(string DancerName, SessionRole Role);
+public sealed record Participant(Guid DancerId, string DancerName, SessionRole Role);

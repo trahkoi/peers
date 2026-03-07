@@ -101,7 +101,7 @@ internal sealed class InMemorySessionService : ISessionService
             var session = GetSession(sessionId);
             return session.Participants.Values
                 .OrderBy(x => x.DancerName, StringComparer.OrdinalIgnoreCase)
-                .Select(x => new Participant(x.DancerName, x.Role))
+                .Select(x => new Participant(Guid.Empty, x.DancerName, x.Role))
                 .ToArray();
         }
     }

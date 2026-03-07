@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Peers.Spotlights;
 using Peers.Training.Sessions;
 
 namespace Peers.Web.Pages.Sessions;
@@ -9,10 +10,12 @@ namespace Peers.Web.Pages.Sessions;
 public class ManageModel : PageModel
 {
     private readonly ISessionService _sessions;
+    private readonly ISpotlightService? _spotlights;
 
-    public ManageModel(ISessionService sessions)
+    public ManageModel(ISessionService sessions, ISpotlightService? spotlights = null)
     {
         _sessions = sessions;
+        _spotlights = spotlights;
     }
 
     public Guid SessionId { get; private set; }
@@ -20,6 +23,8 @@ public class ManageModel : PageModel
     public SessionSummary? Session { get; private set; }
 
     public IReadOnlyList<Participant> Participants { get; private set; } = [];
+
+    public SpotlightRound? SpotlightRound { get; private set; }
 
     [BindProperty]
     public string DancerName { get; set; } = string.Empty;
@@ -98,6 +103,27 @@ public class ManageModel : PageModel
         }
     }
 
+    public IActionResult OnPostGenerateSpotlight(Guid id)
+    {
+        if (_spotlights is null)
+            return RedirectToPage(new { id });
+
+        try
+        {
+            var participants = _sessions.ListParticipants(id);
+            var leaders = participants.Where(p => p.Role == SessionRole.Leader).Select(p => p.DancerId).ToList();
+            var followers = participants.Where(p => p.Role == SessionRole.Follower).Select(p => p.DancerId).ToList();
+            _spotlights.GenerateRound(id, leaders, followers);
+            FlashMessage = "Spotlight pairings generated.";
+            FlashTone = "success";
+            return RedirectToPage(new { id });
+        }
+        catch (Exception ex)
+        {
+            return HandleSessionException(ex, string.Empty, id);
+        }
+    }
+
     private IActionResult HandleSessionException(Exception ex, string field, Guid sessionId)
     {
         switch (ex)
@@ -136,6 +162,7 @@ public class ManageModel : PageModel
         SessionId = sessionId;
         Session = session;
         Participants = _sessions.ListParticipants(sessionId);
+        SpotlightRound = _spotlights?.GetRound(sessionId);
         return true;
     }
 }

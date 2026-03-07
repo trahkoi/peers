@@ -1,4 +1,5 @@
 using Peers.Persistence;
+using Peers.Spotlights;
 using Peers.Training.Sessions;
 using Peers.Web;
 
@@ -11,6 +12,7 @@ if (builder.Configuration.GetConnectionString("Sessions") is { } connectionStrin
 {
     builder.Services.AddPeersDb(connectionString);
     builder.Services.AddTraining();
+    builder.Services.AddSpotlights();
 }
 else
 {

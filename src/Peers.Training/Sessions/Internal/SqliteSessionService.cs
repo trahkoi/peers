@@ -118,7 +118,7 @@ internal sealed class SqliteSessionService : ISessionService
         return Participants
             .Where(p => p.SessionId == sessionId)
             .OrderBy(p => p.DancerName)
-            .Select(p => new Participant(p.DancerName, p.Role))
+            .Select(p => new Participant(p.DancerId, p.DancerName, p.Role))
             .ToArray();
     }
 

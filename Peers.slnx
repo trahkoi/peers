@@ -2,8 +2,10 @@
   <Folder Name="/src/">
     <Project Path="src/Peers.Persistence/Peers.Persistence.csproj" />
     <Project Path="src/Peers.Training/Peers.Training.csproj" />
+    <Project Path="src/Peers.Spotlights/Peers.Spotlights.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Peers.Training.Tests/Peers.Training.Tests.csproj" />
+    <Project Path="tests/Peers.Spotlights.Tests/Peers.Spotlights.Tests.csproj" />
   </Folder>
 </Solution>

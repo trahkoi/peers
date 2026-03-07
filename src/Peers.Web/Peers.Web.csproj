@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Peers.Persistence\Peers.Persistence.csproj" />
+    <ProjectReference Include="..\Peers.Spotlights\Peers.Spotlights.csproj" />
     <ProjectReference Include="..\Peers.Training\Peers.Training.csproj" />
   </ItemGroup>
 
